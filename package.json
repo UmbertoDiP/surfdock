@@ -27,11 +27,15 @@
       "dist/**/*",
       "electron/**/*",
       "dist-electron/**/*",
-      "assets/**/*"
+      "assets/**/*",
+      "eula.txt"
     ],
     "win": {
       "target": "nsis",
       "icon": "assets/surfdock-icon.ico"
+    },
+    "nsis": {
+      "license": "eula.txt"
     }
   },
   "dependencies": {

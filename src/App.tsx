@@ -1,5 +1,6 @@
 import { useStatePolling } from './hooks/useApi';
 import { fetchStartup, StartupProgress } from './hooks/usePolling';
+import { fetchProfile, UserProfile } from './hooks/usePolling';
 import { TitleBar } from './components/ThemeToggle';
 import { StatusPills } from './components/StatusPills';
 import { ActionPanel } from './components/ActionPanel';
@@ -8,11 +9,19 @@ import { DockerPanel } from './components/DockerPanel';
 import { ServiceLinks } from './components/ServiceLinks';
 import { DemonsPanel } from './components/DemonsPanel';
 import { StartupProgress as StartupPanel } from './components/StartupProgress';
+import { RegistrationModal } from './components/RegistrationModal';
+import { SourcesModal } from './components/SourcesModal';
+import { SetupWizard } from './components/SetupWizard';
 import { useEffect, useState } from 'react';
+import { Key, Globe, Settings } from 'lucide-react';
 
 export default function App() {
   const { state, error } = useStatePolling(3000);
   const [startup, setStartup] = useState<StartupProgress | null>(null);
+  const [showLicense, setShowLicense] = useState(false);
+  const [showSources, setShowSources] = useState(false);
+  const [showSetup, setShowSetup] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
     async function poll() {
@@ -21,6 +30,15 @@ export default function App() {
     poll();
     const id = setInterval(poll, 2000);
     return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    fetchProfile()
+      .then(res => {
+        setProfile(res.profile);
+        if (!res.profile.wizardDone) setShowSetup(true);
+      })
+      .catch(() => {});
   }, []);
 
   if (!state) {
@@ -37,10 +55,9 @@ export default function App() {
 
   return (
     <div className="h-screen overflow-hidden bg-[var(--surface-1)] flex flex-col">
-      <TitleBar />
+      <TitleBar state={state} />
 
       <div className="flex-1 min-h-0 overflow-y-auto space-y-3 py-2 scrollbar-thin flex flex-col">
-        <StatusPills state={state} />
         <StartupPanel startup={startup} />
         <ActionPanel docker={state.docker} />
         <TorrentPanel state={state} />
@@ -61,11 +78,31 @@ export default function App() {
             {' · '}
             {state.vpn === 'healthy' ? 'Iron Gate 6/6' : `VPN: ${state.vpn_detail}`}
           </span>
-          <span className="text-[var(--text-secondary)]">
-            {state.vpn_detail?.slice(0, 40)}
+          <span className="flex items-center gap-2">
+            <button onClick={() => setShowSetup(true)} className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--surface-3)] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">
+              <Settings size={11} /><span className="text-[11px]">Configura</span>
+            </button>
+            <button onClick={() => setShowSources(true)} className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--surface-3)] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">
+              <Globe size={11} /><span className="text-[11px]">Fonti</span>
+            </button>
+            <button
+              onClick={() => setShowLicense(true)}
+              className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--surface-3)] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors"
+            >
+              <Key size={11} />
+              <span>{state.license_tier === 'none' ? 'Free' : state.license_tier === 'basic' ? 'Basic' : 'Dev'}</span>
+            </button>
           </span>
         </div>
       </div>
+
+      <RegistrationModal open={showLicense} onClose={() => setShowLicense(false)} />
+      <SourcesModal open={showSources} onClose={() => setShowSources(false)} />
+      <SetupWizard
+        open={showSetup}
+        onClose={() => setShowSetup(false)}
+        onProfileChange={setProfile}
+      />
     </div>
   );
 }

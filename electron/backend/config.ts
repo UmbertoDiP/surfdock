@@ -19,6 +19,10 @@ interface LocalConfig {
   dockerCtPrefixes?: string[];
   lanPreferredPrefix?: string;
   actionsRunnerDir?: string;
+  stripeBasicUrl?: string;
+  stripeDevUrl?: string;
+  adminEmail?: string;
+  corsaroNero?: { announceUrl?: string; username?: string; password?: string };
 }
 
 function loadLocalConfig(): LocalConfig {
@@ -48,6 +52,19 @@ export const QBIT_PASS = env('SURFDOCK_QBIT_PASS') ?? local.qbitPass ?? 'adminad
 export const JELLYFIN_URL = env('SURFDOCK_JELLYFIN_URL') ?? local.jellyfinUrl ?? 'http://localhost:8096';
 export const GAMES_API = env('SURFDOCK_GAMES_API') ?? local.gamesApi ?? 'http://localhost:5184';
 export const GLUETUN_CT = env('SURFDOCK_GLUETUN_CT') ?? local.gluetunCt ?? 'gluetun';
+
+export const STRIPE_BASIC_URL = env('SURFDOCK_STRIPE_BASIC') ?? local.stripeBasicUrl ?? '';
+export const STRIPE_DEV_URL = env('SURFDOCK_STRIPE_DEV') ?? local.stripeDevUrl ?? '';
+
+// Account admin del prodotto: solo lui riceve l'auto-configurazione dei tracker privati.
+export const ADMIN_EMAIL = (env('SURFDOCK_ADMIN_EMAIL') ?? local.adminEmail ?? '').toLowerCase();
+
+// Tracker privato dell'admin (Corsaro Nero), mai esposto nel codice pubblico.
+export const CORSARO_NERO = {
+  announceUrl: env('SURFDOCK_CORSARO_ANNOUNCE') ?? local.corsaroNero?.announceUrl ?? '',
+  username: env('SURFDOCK_CORSARO_USER') ?? local.corsaroNero?.username ?? '',
+  password: env('SURFDOCK_CORSARO_PASS') ?? local.corsaroNero?.password ?? '',
+};
 
 export const POLL_SEC = 8;
 export const IG_POLL_SEC = 60;

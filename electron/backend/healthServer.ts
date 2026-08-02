@@ -1,12 +1,15 @@
 import http from 'http';
 import path from 'path';
 import fs from 'fs';
-import { ROOT, DOCKER_SVCS } from './config';
+import { ROOT, DOCKER_SVCS, STRIPE_BASIC_URL, STRIPE_DEV_URL, ADMIN_EMAIL, CORSARO_NERO } from './config';
 import { log } from './log';
 import { QB } from './qbit';
 import { STATE, startupProgress } from './state';
 import { scanDemons } from './demons';
 import { ironGate, spawnDetached } from './ironGate';
+import { getLicense, activateLicense, clearLicense } from './license';
+import { getSources, addSource, removeSource } from './sources';
+import { getProfile, setEmail, setVpnEnabled, addVpnConnector, removeVpnConnector, markWizardDone } from './profile';
 
 function sendJson(res: http.ServerResponse, code: number, data: any) {
   const body = JSON.stringify(data, null, 2);
@@ -25,6 +28,7 @@ async function handleGet(pathname: string, res: http.ServerResponse) {
     const d = STATE.docker;
     const dup = Object.values(d).filter(v => v === 'running').length;
     const sp = startupProgress();
+    const lic = getLicense();
     sendJson(res, 200, {
       status: 'ok',
       vpn: STATE.vpn,
@@ -38,6 +42,8 @@ async function handleGet(pathname: string, res: http.ServerResponse) {
       jellyfin: STATE.jf_ver ? 'OK' : 'OFF',
       sunshine: STATE.sun,
       games_manager: STATE.games,
+      license_tier: lic.tier,
+      vpn_enabled: getProfile().vpnEnabled,
     });
   } else if (pathname === '/api/startup') {
     sendJson(res, 200, startupProgress());
@@ -59,6 +65,28 @@ async function handleGet(pathname: string, res: http.ServerResponse) {
     }
   } else if (pathname === '/api/demons') {
     sendJson(res, 200, await scanDemons());
+  } else if (pathname === '/api/license') {
+    const lic = getLicense();
+    sendJson(res, 200, {
+      ok: true,
+      tier: lic.tier,
+      email: lic.email || null,
+      activated_at: lic.activatedAt || null,
+      expires_at: lic.expiresAt || null,
+      has_license: lic.tier !== 'none',
+      stripe_basic_url: STRIPE_BASIC_URL,
+      stripe_dev_url: STRIPE_DEV_URL,
+    });
+  } else if (pathname === '/api/sources') {
+    sendJson(res, 200, { ok: true, sources: getSources() });
+  } else if (pathname === '/api/profile') {
+    const profile = getProfile();
+    sendJson(res, 200, {
+      ok: true,
+      profile,
+      admin_email: ADMIN_EMAIL || null,
+      corsaro_configured: !!CORSARO_NERO.announceUrl,
+    });
   } else {
     sendJson(res, 404, { error: 'not found' });
   }
@@ -67,18 +95,19 @@ async function handleGet(pathname: string, res: http.ServerResponse) {
 async function handlePost(pathname: string, search: URLSearchParams, res: http.ServerResponse) {
   const hash = (search.get('hash') || '').trim();
   const hashes = hash ? [hash] : [];
+  const vpnGuard = STATE.vpn === 'unhealthy' && getProfile().vpnEnabled;
   switch (pathname) {
     case '/api/torrent/pause':
       if (hashes.length) { await QB.stopHashes(hashes); sendJson(res, 200, { ok: true, action: 'pause', hash }); }
       else { await QB.stopAll(); sendJson(res, 200, { ok: true, action: 'pause' }); }
       break;
     case '/api/torrent/resume':
-      if (STATE.vpn === 'unhealthy') sendJson(res, 403, { ok: false, error: 'VPN giu\'' });
+      if (vpnGuard) sendJson(res, 403, { ok: false, error: 'VPN giu\'' });
       else if (hashes.length) { await QB.startHashes(hashes); sendJson(res, 200, { ok: true, action: 'resume', hash }); }
       else { await QB.startAll(); sendJson(res, 200, { ok: true, action: 'resume' }); }
       break;
     case '/api/torrent/force':
-      if (STATE.vpn === 'unhealthy') sendJson(res, 403, { ok: false, error: 'VPN giu\'' });
+      if (vpnGuard) sendJson(res, 403, { ok: false, error: 'VPN giu\'' });
       else if (hashes.length) { await QB.forceStartHashes(hashes); sendJson(res, 200, { ok: true, action: 'force', hash }); }
       else { await QB.forceStartAll(); sendJson(res, 200, { ok: true, action: 'force' }); }
       break;
@@ -132,6 +161,73 @@ async function handlePost(pathname: string, search: URLSearchParams, res: http.S
         dl_limit_kb: ti.dl_limit > 0 ? Math.round(ti.dl_limit / 1024) : 0,
         dl_speed_kb: Math.round(ti.dl_speed / 1024),
       });
+      break;
+    }
+    case '/api/license/activate': {
+      const key = (search.get('key') || '').trim();
+      if (!key) { sendJson(res, 400, { ok: false, error: 'key richiesto' }); break; }
+      const result = activateLicense(key);
+      if (result.tier === 'none') { sendJson(res, 403, { ok: false, error: 'chiave non valida' }); break; }
+      sendJson(res, 200, { ok: true, tier: result.tier, expires_at: result.expiresAt });
+      break;
+    }
+    case '/api/license/clear':
+      clearLicense();
+      sendJson(res, 200, { ok: true, tier: 'none' });
+      break;
+    case '/api/sources/add': {
+      const name = (search.get('name') || '').trim();
+      const announceUrl = (search.get('announceUrl') || '').trim();
+      const username = (search.get('username') || '').trim();
+      const password = (search.get('password') || '').trim();
+      if (!name || !announceUrl) { sendJson(res, 400, { ok: false, error: 'name e announceUrl richiesti' }); break; }
+      const entry = addSource({ name, announceUrl, username, password });
+      sendJson(res, 200, { ok: true, source: entry });
+      break;
+    }
+    case '/api/sources/remove': {
+      const id = (search.get('id') || '').trim();
+      if (!id) { sendJson(res, 400, { ok: false, error: 'id richiesto' }); break; }
+      const ok = removeSource(id);
+      sendJson(res, 200, { ok, removed: ok });
+      break;
+    }
+    case '/api/profile/save': {
+      const email = (search.get('email') || '').trim();
+      const displayName = (search.get('displayName') || '').trim();
+      if (!email) { sendJson(res, 400, { ok: false, error: 'email richiesta' }); break; }
+      const profile = setEmail(email, displayName);
+      sendJson(res, 200, { ok: true, profile });
+      break;
+    }
+    case '/api/profile/vpn/set': {
+      const raw = (search.get('enabled') || '').trim();
+      if (raw !== 'true' && raw !== 'false') { sendJson(res, 400, { ok: false, error: 'enabled richiesto (true|false)' }); break; }
+      const profile = setVpnEnabled(raw === 'true');
+      sendJson(res, 200, { ok: true, profile });
+      break;
+    }
+    case '/api/profile/vpn/add': {
+      const provider = (search.get('provider') || '').trim();
+      const username = (search.get('username') || '').trim();
+      const password = (search.get('password') || '').trim();
+      const server = (search.get('server') || '').trim();
+      const label = (search.get('label') || provider || 'VPN').trim();
+      if (!provider) { sendJson(res, 400, { ok: false, error: 'provider richiesto' }); break; }
+      const profile = addVpnConnector({ provider, label, username, password, server });
+      sendJson(res, 200, { ok: true, profile });
+      break;
+    }
+    case '/api/profile/vpn/remove': {
+      const id = (search.get('id') || '').trim();
+      if (!id) { sendJson(res, 400, { ok: false, error: 'id richiesto' }); break; }
+      const profile = removeVpnConnector(id);
+      sendJson(res, 200, { ok: true, profile });
+      break;
+    }
+    case '/api/profile/wizard/done': {
+      const profile = markWizardDone();
+      sendJson(res, 200, { ok: true, profile });
       break;
     }
     default:

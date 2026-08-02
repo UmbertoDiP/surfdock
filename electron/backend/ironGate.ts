@@ -9,6 +9,7 @@ import { igLog, log } from './log';
 import { QB, qbitApiAlive } from './qbit';
 import { run, clearFlag, writeFlag } from './probes';
 import { setStartupPhase, dockerReady } from './state';
+import { getProfile } from './profile';
 
 type CheckResult = [boolean, string];
 
@@ -190,6 +191,23 @@ export async function ironGatePoller(notify: NotifyFn, stop: () => boolean): Pro
   setStartupPhase('GATE_COLD', 'Primo check Iron Gate in corso...');
   while (!stop()) {
     try {
+      // Modalita' VPN disabilitata: scelta utente esplicita, niente blocchi Iron Gate.
+      if (!getProfile().vpnEnabled) {
+        if (ironGate.vpnDown) ironGate.vpnDown = false;
+        clearFlag();
+        setStartupPhase('ARMED', 'VPN disabilitata: traffico diretto (scelta utente).');
+        if (!autoResumeDone) {
+          try {
+            await QB.startAll();
+            autoResumeDone = true;
+            igLog('[AUTO-RESUME] boot: torrent avviati (VPN disabilitata)');
+          } catch (e: any) {
+            igLog(`[ERR] auto-resume boot: ${e}`);
+          }
+        }
+        await new Promise(r => setTimeout(r, IG_POLL_SEC * 1000));
+        continue;
+      }
       const { ok, failed } = await runIronGate();
       if (!ok) {
         if (!ironGate.vpnDown) {
