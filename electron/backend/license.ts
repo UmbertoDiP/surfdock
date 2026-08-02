@@ -53,11 +53,15 @@ export function validateLicenseKey(licenseKey: string): LicenseState {
   try {
     const cleaned = licenseKey.replace(/-/g, '').toUpperCase();
     if (!cleaned.startsWith('SURFDK')) return FREE_STATE;
-    const tierRaw = cleaned.slice(6, 10);
-    if (tierRaw !== 'BASIC' && tierRaw !== 'DEV') return FREE_STATE;
-    const tier: LicenseTier = tierRaw === 'BASIC' ? 'basic' : 'dev';
-    const tsPart = cleaned.slice(10, 16);
-    const keyPart = cleaned.slice(16, 32);
+    let tier: LicenseTier;
+    let rest: string;
+    // Formato: SURFDK + BASIC(5)|DEV(3) + ts36(8) + token HMAC(16).
+    if (cleaned.startsWith('SURFDKBASIC')) { tier = 'basic'; rest = cleaned.slice(11); }
+    else if (cleaned.startsWith('SURFDKDEV')) { tier = 'dev'; rest = cleaned.slice(9); }
+    else return FREE_STATE;
+    const keyPart = rest.slice(8, 24);
+    // Il ts e' base36 case-sensitive: il generatore lo emette minuscolo.
+    const tsPart = rest.slice(0, 8).toLowerCase();
     const expected = crypto.createHmac('sha256', VALIDATOR_SECRET)
       .update(`${tier}:surfdock-key:${tsPart}`)
       .digest('hex').toUpperCase().slice(0, 16);
