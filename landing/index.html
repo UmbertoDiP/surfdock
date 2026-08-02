@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SurfDock - la baia sicura per torrent, VPN e Docker</title>
+  <meta name="description" content="SurfDock sorveglia la tua casa digitale: killswitch VPN, dashboard in tempo reale, controllo torrent, Docker e servizi da tray e web, su Windows, macOS e Linux." />
+  <meta name="theme-color" content="#0F172A" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="SurfDock - la baia sicura per torrent, VPN e Docker" />
+  <meta property="og:description" content="Il guardiano del tuo home server: VPN killswitch, dashboard live, torrent, Docker." />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="./surfdock-favicon.ico" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "SurfDock",
+    "operatingSystem": "Windows, macOS, Linux",
+    "applicationCategory": "UtilitiesApplication",
+    "description": "Safe harbor for torrents, VPN and Docker: VPN killswitch, live dashboard, per-torrent and Docker stack control.",
+    "offers": [
+      { "@type": "Offer", "name": "SurfDock Basic", "price": "29", "priceCurrency": "EUR" },
+      { "@type": "Offer", "name": "SurfDock Dev", "price": "79", "priceCurrency": "EUR" }
+    ]
+  }
+  </script>
+  <style>
+    :root {
+      --bg: #0B1120;
+      --surface: #111A2E;
+      --surface-2: #16213A;
+      --border: #1E2B47;
+      --text: #E6EDF7;
+      --text-2: #9FB0C9;
+      --muted: #64748B;
+      --accent: #22D3EE;
+      --accent-2: #67E8F9;
+      --success: #34D399;
+      --danger: #F87171;
+    }
+    [data-theme="light"] {
+      --bg: #F3F5F8;
+      --surface: #FFFFFF;
+      --surface-2: #FAFBFD;
+      --border: #DDE3EA;
+      --text: #1C2433;
+      --text-2: #4A5568;
+      --muted: #8A94A6;
+      --accent: #0891B2;
+      --accent-2: #06B6D4;
+      --success: #059669;
+      --danger: #DC2626;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      transition: background .3s, color .3s;
+    }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 24px; position: sticky; top: 0; z-index: 10;
+      background: color-mix(in srgb, var(--bg) 82%, transparent);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
+    .brand .logo {
+      width: 30px; height: 30px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 55%, transparent);
+    }
+    .brand .logo svg { width: 18px; height: 18px; }
+    nav .links { display: flex; align-items: center; gap: 18px; font-size: 14px; }
+    nav .links a { color: var(--text-2); text-decoration: none; }
+    nav .links a:hover { color: var(--accent); }
+    .lang-toggle {
+      background: var(--surface); border: 1px solid var(--border); color: var(--text);
+      padding: 5px 12px; border-radius: 999px; font-size: 13px; cursor: pointer;
+    }
+    .lang-toggle:hover { border-color: var(--accent); color: var(--accent); }
+    .hero { text-align: center; padding: 88px 24px 56px; }
+    .hero h1 { font-size: clamp(34px, 6vw, 56px); letter-spacing: -0.02em; margin-bottom: 16px; }
+    .hero h1 .grad {
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .hero p { font-size: 18px; color: var(--text-2); max-width: 640px; margin: 0 auto 32px; }
+    .cta {
+      display: inline-block; background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #04121A; font-weight: 700; padding: 14px 34px; border-radius: 14px;
+      text-decoration: none; font-size: 16px; box-shadow: 0 8px 30px color-mix(in srgb, var(--accent) 40%, transparent);
+    }
+    .cta:hover { transform: translateY(-2px); }
+    .badges { margin-top: 18px; font-size: 13px; color: var(--muted); }
+    .section { padding: 56px 0; }
+    .section h2 { font-size: 28px; margin-bottom: 12px; letter-spacing: -0.01em; }
+    .section > .sub { color: var(--text-2); margin-bottom: 36px; max-width: 640px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      padding: 24px; transition: transform .2s, border-color .2s;
+    }
+    .card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+    .card .ic {
+      width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); margin-bottom: 14px;
+    }
+    .card h3 { font-size: 17px; margin-bottom: 8px; }
+    .card p { font-size: 14px; color: var(--text-2); }
+    .os-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+    .os-chip {
+      border: 1px solid var(--border); border-radius: 999px; padding: 4px 14px;
+      font-size: 13px; color: var(--text-2); background: var(--surface-2);
+    }
+    .arch {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      padding: 24px; font-family: ui-monospace, Consolas, monospace; font-size: 13px;
+      color: var(--text-2); overflow-x: auto;
+    }
+    .arch .hl { color: var(--accent); }
+    .arch .ok { color: var(--success); }
+    .pricing-card { display: flex; flex-direction: column; gap: 14px; }
+    .pricing-card h3 { font-size: 19px; }
+    .price { font-size: 44px; font-weight: 800; letter-spacing: -0.02em; line-height: 1; }
+    .price .cur { font-size: 15px; color: var(--muted); font-weight: 600; margin-left: 8px; }
+    .pricing-card .note { font-size: 12px; color: var(--muted); }
+    .pricing-card ul { list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 14px; color: var(--text-2); }
+    .pricing-card ul li { padding-left: 20px; position: relative; }
+    .pricing-card ul li::before {
+      content: ""; position: absolute; left: 0; top: 8px;
+      width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+    }
+    .pricing-card .cta { text-align: center; margin-top: auto; display: block; }
+    .pricing-card .cta.gray { background: var(--surface-2); border: 1px solid var(--border); color: var(--text); box-shadow: none; }
+    .pricing-card.featured { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); }
+    .faq .card p { margin-top: 6px; }
+    footer {
+      border-top: 1px solid var(--border); padding: 28px 0 40px;
+      text-align: center; color: var(--muted); font-size: 13px;
+    }
+    footer a { color: var(--text-2); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#04121A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 6c2.5 0 2.5 2 5 2s2.5-2 5-2 2.5 2 5 2 2.5-2 5-2 2.5 2 5 2" />
+          <path d="M2 12c2.5 0 2.5 2 5 2s2.5-2 5-2 2.5 2 5 2 2.5-2 5-2 2.5 2 5 2" />
+          <path d="M2 18c2.5 0 2.5 2 5 2s2.5-2 5-2 2.5 2 5 2 2.5-2 5-2 2.5 2 5 2" />
+        </svg>
+      </div>
+      SurfDock
+    </div>
+    <div class="links">
+      <a href="#features" data-i18n="nav-features">Funzionalita</a>
+      <a href="#arch" data-i18n="nav-arch">Architettura</a>
+      <a href="#pricing" data-i18n="nav-pricing">Prezzi</a>
+      <a href="#faq" data-i18n="nav-faq">FAQ</a>
+      <button class="lang-toggle" id="langToggle" title="Switch language / Cambia lingua">EN</button>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <h1><span class="grad" data-i18n="hero-title">SurfDock</span><br /><span data-i18n="hero-sub">la baia sicura del tuo home server</span></h1>
+    <p data-i18n="hero-desc">Killswitch VPN integrato, dashboard in tempo reale, controllo torrent e stack Docker: la tua casa digitale sempre sotto controllo, anche quando non sei in casa.</p>
+    <a class="cta" href="#" data-i18n="hero-cta">Scarica per Windows</a>
+    <div class="badges" data-i18n="hero-badges">Windows · macOS · Linux · Elettronica open source</div>
+  </header>
+
+  <section class="section" id="features">
+    <div class="wrap">
+      <h2 data-i18n="f-title">Tutto il controllo, un unico pannello</h2>
+      <p class="sub" data-i18n="f-sub">Sei test zero-trust prima di dichiarare il sistema armato, telemetria ogni 8 secondi, azioni globali e per singolo torrent.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z"/></svg></div>
+          <h3 data-i18n="f1-t">Iron Gate VPN</h3>
+          <p data-i18n="f1-p">Killswitch a 6 test: se il tunnel VPN cade, i torrent vengono bloccati prima che un singolo byte esca in chiaro. Al riavvio tutto riparte in automatico.</p>
+        </div>
+        <div class="card">
+          <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></div>
+          <h3 data-i18n="f2-t">Dashboard live</h3>
+          <p data-i18n="f2-p">VPN, download, seed, velocita, Jellyfin, Docker e Sunshine: stato aggiornato ogni 8 secondi con indicatori colorati sempre leggibili.</p>
+        </div>
+        <div class="card">
+          <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 12h6l3-9"/></svg></div>
+          <h3 data-i18n="f3-t">Torrent per torrent</h3>
+          <p data-i18n="f3-p">Pausa, ripresa, forza, recheck e rimozione su singoli download, con griglia compatta che si adatta alla tua finestra.</p>
+        </div>
+        <div class="card">
+          <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+          <h3 data-i18n="f4-t">Stack Docker</h3>
+          <p data-i18n="f4-p">Avvia e ferma tutto il tuo stack (Jellyfin, Sonarr, Radarr, gluetun...) con un click, oppure dal menu di sistema.</p>
+        </div>
+        <div class="card">
+          <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17l6-6-6-6"/><path d="M12 19h8"/></svg></div>
+          <h3 data-i18n="f5-t">Tray nativo</h3>
+          <p data-i18n="f5-p">Vive in background: icona colorata che cambia con lo stato della VPN e notifiche quando qualcosa non va.</p>
+        </div>
+        <div class="card">
+          <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8"/></svg></div>
+          <h3 data-i18n="f6-t">Cross-platform</h3>
+          <p data-i18n="f6-p">Windows, macOS e Linux. Lo stesso pannello ovunque giri il tuo server di casa.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="arch">
+    <div class="wrap">
+      <h2 data-i18n="a-title">Architettura</h2>
+      <p class="sub" data-i18n="a-sub">Un solo demone Electron, zero servizi separati: backend nel main process, UI React leggera, health endpoint per il watchdog.</p>
+      <div class="arch">
+        <div><span class="hl">[BOOT]</span> avvia Docker Desktop se spento <span class="ok">-&gt; attende ready (max 120s)</span></div>
+        <div><span class="hl">[GATE]</span> Iron Gate: 6 test zero-trust (killswitch, egress IP Mullvad, routing tun0, binding qBit, DNS, UDP tracker)</div>
+        <div><span class="hl">[ARMED]</span> stato OK <span class="ok">-&gt; auto-resume torrent + telemetria 8s + poller Gate 60s</span></div>
+        <div><span class="hl">[HEALTH]</span> <span class="ok">http://localhost:5192/health</span> per watchdog esterno e monitoraggio</div>
+        <div><span class="hl">[AUTOSTART]</span> Login Item nativo (Windows/macOS), .desktop su Linux</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="pricing">
+    <div class="wrap">
+      <h2 data-i18n="p-title">Prezzi semplici, una tantum</h2>
+      <p class="sub" data-i18n="p-sub">Nessun abbonamento, nessun costo ricorrente: compri, installi e lo stack e' tuo.</p>
+      <div class="grid">
+        <div class="card pricing-card">
+          <h3 data-i18n="p1-name">SurfDock Basic</h3>
+          <div class="price">29<span class="cur">EUR</span></div>
+          <div class="note" data-i18n="p1-note">installer Windows NSIS, licenza per 1 home server</div>
+          <ul>
+            <li data-i18n="p1-b1">Tutte le funzioni: Iron Gate, dashboard, torrent, Docker</li>
+            <li data-i18n="p1-b2">Configurazione via file, senza toccare codice</li>
+            <li data-i18n="p1-b3">1 anno di aggiornamenti inclusi</li>
+            <li data-i18n="p1-b4">Supporto email 30 giorni</li>
+          </ul>
+          <a class="cta" href="https://github.com/UmbertoDiP/surfdock/releases" target="_blank" rel="noopener" data-i18n="p1-cta">Scarica</a>
+        </div>
+        <div class="card pricing-card featured">
+          <h3 data-i18n="p2-name">SurfDock Dev</h3>
+          <div class="price">79<span class="cur">EUR</span></div>
+          <div class="note" data-i18n="p2-note">sorgente completo + binario, licenza per 1 home server</div>
+          <ul>
+            <li data-i18n="p2-b1">Repo sorgente completo e modificabile</li>
+            <li data-i18n="p2-b2">Script di build e integrazione headless via API</li>
+            <li data-i18n="p2-b3">1 anno di aggiornamenti + supporto prioritario</li>
+            <li data-i18n="p2-b4">Licenza commerciale per uso personale o business</li>
+          </ul>
+          <a class="cta gray" href="mailto:umberto.dipuorto2@consultant.aruba.it?subject=SurfDock%20Dev%20License" data-i18n="p2-cta">Ottieni la licenza</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="faq">
+    <div class="wrap">
+      <h2 data-i18n="q-title">Domande frequenti</h2>
+      <div class="grid">
+        <div class="card">
+          <h3 data-i18n="q1-t">Serve un abbonamento VPN?</h3>
+          <p data-i18n="q1-p">No: SurfDock si integra con il tuo stack esistente (gluetun/Mullvad o qualunque container VPN del tuo server).</p>
+        </div>
+        <div class="card">
+          <h3 data-i18n="q2-t">Cosa succede se cade la VPN?</h3>
+          <p data-i18n="q2-p">I torrent vengono sospesi immediatamente e ripresi in automatico al ripristino del tunnel. Jellyfin resta raggiungibile in LAN.</p>
+        </div>
+        <div class="card">
+          <h3 data-i18n="q3-t">Funziona senza finestra aperta?</h3>
+          <p data-i18n="q3-p">Si: l'app vive nel tray e un watchdog la riavvia automaticamente se il health endpoint non risponde.</p>
+        </div>
+        <div class="card">
+          <h3 data-i18n="q4-t">Quanto costa?</h3>
+          <p data-i18n="q4-p">Basic 29 EUR una tantum: installer compilato e 1 anno di aggiornamenti. Dev 79 EUR: anche il sorgente completo per modificare e ricompilare. Nessun abbonamento.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <div data-i18n="foot-note">SurfDock - torrent, VPN e Docker in una baia sicura. Made in Italy.</div>
+      <div style="margin-top: 8px">
+        <a href="https://github.com/UmbertoDiP/surfdock" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const dict = {
+      it: {
+        'nav-features': 'Funzionalita', 'nav-arch': 'Architettura', 'nav-pricing': 'Prezzi', 'nav-faq': 'FAQ',
+        'hero-title': 'SurfDock', 'hero-sub': 'il guardiano del tuo home server',
+        'hero-desc': 'Killswitch VPN integrato, dashboard in tempo reale, controllo torrent e stack Docker: la tua casa digitale sempre sotto controllo, anche quando non sei in casa.',
+        'hero-cta': 'Scarica per Windows',
+        'hero-badges': 'Windows · macOS · Linux · Elettronica open source',
+        'f-title': 'Tutto il controllo, un unico pannello',
+        'f-sub': 'Sei test zero-trust prima di dichiarare il sistema armato, telemetria ogni 8 secondi, azioni globali e per singolo torrent.',
+        'f1-t': 'Iron Gate VPN', 'f1-p': 'Killswitch a 6 test: se il tunnel VPN cade, i torrent vengono bloccati prima che un singolo byte esca in chiaro. Al riavvio tutto riparte in automatico.',
+        'f2-t': 'Dashboard live', 'f2-p': 'VPN, download, seed, velocita, Jellyfin, Docker e Sunshine: stato aggiornato ogni 8 secondi con indicatori colorati sempre leggibili.',
+        'f3-t': 'Torrent per torrent', 'f3-p': 'Pausa, ripresa, forza, recheck e rimozione su singoli download, con griglia compatta che si adatta alla tua finestra.',
+        'f4-t': 'Stack Docker', 'f4-p': 'Avvia e ferma tutto il tuo stack (Jellyfin, Sonarr, Radarr, gluetun...) con un click, oppure dal menu di sistema.',
+        'f5-t': 'Tray nativo', 'f5-p': 'Vive in background: icona colorata che cambia con lo stato della VPN e notifiche quando qualcosa non va.',
+        'f6-t': 'Cross-platform', 'f6-p': 'Windows, macOS e Linux. Lo stesso pannello ovunque giri il tuo server di casa.',
+        'a-title': 'Architettura', 'a-sub': 'Un solo demone Electron, zero servizi separati: backend nel main process, UI React leggera, health endpoint per il watchdog.',
+        'q-title': 'Domande frequenti',
+        'q1-t': 'Serve un abbonamento VPN?', 'q1-p': 'No: SurfDock si integra con il tuo stack esistente (gluetun/Mullvad o qualunque container VPN del tuo server).',
+        'q2-t': 'Cosa succede se cade la VPN?', 'q2-p': 'I torrent vengono sospesi immediatamente e ripresi in automatico al ripristino del tunnel. Jellyfin resta raggiungibile in LAN.',
+        'q3-t': 'Funziona senza finestra aperta?', 'q3-p': 'Si: l\u2019app vive nel tray e un watchdog la riavvia automaticamente se il health endpoint non risponde.',
+        'q4-t': 'Quanto costa?', 'q4-p': 'Basic 29 EUR una tantum: installer compilato e 1 anno di aggiornamenti. Dev 79 EUR: anche il sorgente completo per modificare e ricompilare. Nessun abbonamento.',
+        'p-title': 'Prezzi semplici, una tantum',
+        'p-sub': 'Nessun abbonamento, nessun costo ricorrente: compri, installi e lo stack e\' tuo.',
+        'p1-name': 'SurfDock Basic', 'p1-note': 'installer Windows NSIS, licenza per 1 home server',
+        'p1-b1': 'Tutte le funzioni: Iron Gate, dashboard, torrent, Docker',
+        'p1-b2': 'Configurazione via file, senza toccare codice',
+        'p1-b3': '1 anno di aggiornamenti inclusi',
+        'p1-b4': 'Supporto email 30 giorni',
+        'p1-cta': 'Scarica',
+        'p2-name': 'SurfDock Dev', 'p2-note': 'sorgente completo + binario, licenza per 1 home server',
+        'p2-b1': 'Repo sorgente completo e modificabile',
+        'p2-b2': 'Script di build e integrazione headless via API',
+        'p2-b3': '1 anno di aggiornamenti + supporto prioritario',
+        'p2-b4': 'Licenza commerciale per uso personale o business',
+        'p2-cta': 'Ottieni la licenza',
+        'foot-note': 'SurfDock - torrent, VPN e Docker in una baia sicura. Made in Italy.',
+      },
+      en: {
+        'nav-features': 'Features', 'nav-arch': 'Architecture', 'nav-pricing': 'Pricing', 'nav-faq': 'FAQ',
+        'hero-title': 'SurfDock', 'hero-sub': 'the safe harbor for your home server',
+        'hero-desc': 'Built-in VPN killswitch, real-time dashboard, per-torrent and Docker stack control: your digital home always in check, even when you are away.',
+        'hero-cta': 'Download for Windows',
+        'hero-badges': 'Windows · macOS · Linux · Open source Electron',
+        'f-title': 'Full control, one panel',
+        'f-sub': 'Six zero-trust checks before arming, telemetry every 8 seconds, global and per-torrent actions.',
+        'f1-t': 'Iron Gate VPN', 'f1-p': 'Six-test killswitch: if the VPN tunnel drops, torrents are paused before a single byte leaks. Everything resumes automatically on reboot.',
+        'f2-t': 'Live dashboard', 'f2-p': 'VPN, downloads, seeds, speeds, Jellyfin, Docker and Sunshine: state refreshed every 8 seconds with readable status colors.',
+        'f3-t': 'Per-torrent control', 'f3-p': 'Pause, resume, force, recheck and delete single downloads, with a compact grid that adapts to your window.',
+        'f4-t': 'Docker stack', 'f4-p': 'Start and stop your whole stack (Jellyfin, Sonarr, Radarr, gluetun...) with one click, or from the system tray.',
+        'f5-t': 'Native tray', 'f5-p': 'Lives in the background: a status icon that changes color with VPN state and notifications when something goes wrong.',
+        'f6-t': 'Cross-platform', 'f6-p': 'Windows, macOS and Linux. The same panel wherever your home server runs.',
+        'a-title': 'Architecture', 'a-sub': 'A single Electron daemon, zero separate services: backend in the main process, lightweight React UI, health endpoint for the watchdog.',
+        'q-title': 'FAQ',
+        'q1-t': 'Do I need a VPN subscription?', 'q1-p': 'No: SurfDock integrates with your existing stack (gluetun/Mullvad or any VPN container on your server).',
+        'q2-t': 'What happens if the VPN drops?', 'q2-p': 'Torrents are paused immediately and resume automatically when the tunnel is back. Jellyfin stays reachable on LAN.',
+        'q3-t': 'Does it work without an open window?', 'q3-p': 'Yes: the app lives in the tray and a watchdog restarts it automatically if the health endpoint stops responding.',
+        'q4-t': 'How much does it cost?', 'q4-p': 'Basic 29 EUR one-time: compiled installer and 1 year of updates. Dev 79 EUR: full source included for modification and rebuilds. No subscriptions.',
+        'p-title': 'Simple one-time pricing',
+        'p-sub': 'No subscriptions, no recurring costs: buy, install, and the stack is yours.',
+        'p1-name': 'SurfDock Basic', 'p1-note': 'Windows NSIS installer, license for 1 home server',
+        'p1-b1': 'All features: Iron Gate, dashboard, torrents, Docker',
+        'p1-b2': 'File-based configuration, no code required',
+        'p1-b3': '1 year of updates included',
+        'p1-b4': '30 days email support',
+        'p1-cta': 'Download',
+        'p2-name': 'SurfDock Dev', 'p2-note': 'full source + binary, license for 1 home server',
+        'p2-b1': 'Full modifiable source repository',
+        'p2-b2': 'Build scripts and headless API integration',
+        'p2-b3': '1 year of updates + priority support',
+        'p2-b4': 'Commercial license for personal or business use',
+        'p2-cta': 'Get the license',
+        'foot-note': 'SurfDock - the safe harbor for your home server. Made in Italy.',
+      },
+    };
+    const btn = document.getElementById('langToggle');
+    let lang = localStorage.getItem('surfdock-lang') || 'it';
+    function apply() {
+      document.documentElement.lang = lang;
+      btn.textContent = lang === 'it' ? 'EN' : 'IT';
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const k = el.getAttribute('data-i18n');
+        if (dict[lang] && dict[lang][k] !== undefined) el.textContent = dict[lang][k];
+      });
+    }
+    btn.addEventListener('click', () => { lang = lang === 'it' ? 'en' : 'it'; localStorage.setItem('surfdock-lang', lang); apply(); });
+    apply();
+  </script>
+</body>
+</html>

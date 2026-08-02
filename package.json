@@ -1,0 +1,61 @@
+{
+  "name": "surfdock",
+  "description": "SurfDock - la baia sicura per torrent, VPN e Docker",
+  "author": "Umberto Di Puorto",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist-electron/main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/UmbertoDiP/surfdock.git"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:electron": "node scripts/build-electron.mjs",
+    "electron:dev": "npm run build:electron && concurrently -k \"cross-env BROWSER=none vite --port 5174 --strictPort --host 127.0.0.1\" \"wait-on http://127.0.0.1:5174 && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5174 electron .\"",
+    "electron:build": "npm run build:electron && cross-env ELECTRON_BUILD=1 npm run build && electron-builder"
+  },
+  "build": {
+    "asar": true,
+    "appId": "com.surfdock.app",
+    "productName": "SurfDock",
+    "directories": {
+      "output": "dist_electron"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "dist-electron/**/*",
+      "assets/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/surfdock-icon.ico"
+    }
+  },
+  "dependencies": {
+    "lucide-react": "^1.16.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.6.0",
+    "clsx": "^2.1.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.0",
+    "@types/node": "^24.12.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.2",
+    "concurrently": "^10.0.0",
+    "cross-env": "^10.1.0",
+    "electron": "^42.3.0",
+    "electron-builder": "^26.8.1",
+    "esbuild": "^0.28.0",
+    "tailwindcss": "^4.3.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.0.16",
+    "wait-on": "^9.0.10"
+  }
+}

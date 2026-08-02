@@ -1,0 +1,8 @@
+node_modules/
+dist/
+dist-electron/
+dist_electron/
+__pycache__/
+config.local.json
+*.log
+logs/
