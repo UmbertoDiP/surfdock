@@ -1,7 +1,7 @@
 import http from 'http';
 import path from 'path';
 import fs from 'fs';
-import { ROOT, DOCKER_SVCS, STRIPE_BASIC_URL, STRIPE_DEV_URL, ADMIN_EMAIL, CORSARO_NERO } from './config';
+import { ROOT, DOCKER_SVCS, STRIPE_BASIC_URL, STRIPE_DEV_URL, ADMIN_EMAIL, CORSARO_NERO, PROWLARR_URL, PROWLARR_KEY } from './config';
 import { log } from './log';
 import { QB } from './qbit';
 import { STATE, startupProgress } from './state';
@@ -23,7 +23,48 @@ function sendJson(res: http.ServerResponse, code: number, data: any) {
   res.end(body);
 }
 
-async function handleGet(pathname: string, res: http.ServerResponse) {
+const CATEGORY_IDS: Record<string, number> = { movies: 2000, tv: 5000, audio: 3000, pc: 4000 };
+function categoryName(raw: any[]): string {
+  for (const c of raw ?? []) {
+    const id = typeof c === 'number' ? c : c?.id;
+    if (id >= 2000 && id < 3000) return 'Movie';
+    if (id >= 5000 && id < 6000) return 'TV';
+    if (id >= 3000 && id < 4000) return 'Audio';
+    if (id >= 4000 && id < 5000) return 'PC';
+    if (id >= 6000 && id < 7000) return 'XXX';
+    if (id >= 1000 && id < 2000) return 'Console';
+  }
+  return 'Other';
+}
+
+async function searchProwlarr(q: string, category: string, limit: number): Promise<any[]> {
+  const params = new URLSearchParams({ query: q, type: 'search', limit: String(Math.min(limit || 50, 100)) });
+  const catId = CATEGORY_IDS[category];
+  if (catId) params.set('categories', String(catId));
+  const res = await fetch(`${PROWLARR_URL}/api/v1/search?${params}`, {
+    headers: { 'X-Api-Key': PROWLARR_KEY },
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!res.ok) throw new Error(`Prowlarr HTTP ${res.status}`);
+  const raw = await res.json() as any[];
+  return (raw || []).map(r => ({
+    title: r.title || '',
+    size: r.size ?? 0,
+    seeders: r.seeders ?? 0,
+    leechers: r.leechers ?? 0,
+    grabs: r.grabs ?? 0,
+    indexer: r.indexer || '',
+    category: categoryName(r.categories),
+    publishDate: r.publishDate || null,
+    ageHours: r.ageHours ?? null,
+    infoUrl: r.infoUrl || '',
+    magnet: typeof r.magnetUrl === 'string' && r.magnetUrl.startsWith('magnet:')
+      ? r.magnetUrl
+      : typeof r.guid === 'string' && r.guid.startsWith('magnet:') ? r.guid : '',
+  }));
+}
+
+async function handleGet(pathname: string, search: URLSearchParams, res: http.ServerResponse) {
   if (pathname === '/health') {
     const d = STATE.docker;
     const dup = Object.values(d).filter(v => v === 'running').length;
@@ -79,6 +120,18 @@ async function handleGet(pathname: string, res: http.ServerResponse) {
     });
   } else if (pathname === '/api/sources') {
     sendJson(res, 200, { ok: true, sources: getSources() });
+  } else if (pathname === '/api/search') {
+    const q = (search.get('q') || '').trim();
+    const category = (search.get('category') || 'all').trim();
+    const limit = Number(search.get('limit') || 50);
+    if (!q) return sendJson(res, 400, { ok: false, error: 'parametro q richiesto' });
+    if (!PROWLARR_KEY) return sendJson(res, 400, { ok: false, error: 'Prowlarr non configurato' });
+    try {
+      const results = await searchProwlarr(q, category, limit);
+      sendJson(res, 200, { ok: true, results });
+    } catch (e: any) {
+      sendJson(res, 502, { ok: false, error: String(e?.message || e).slice(0, 120) });
+    }
   } else if (pathname === '/api/profile') {
     const profile = getProfile();
     sendJson(res, 200, {
@@ -97,6 +150,15 @@ async function handlePost(pathname: string, search: URLSearchParams, res: http.S
   const hashes = hash ? [hash] : [];
   const vpnGuard = STATE.vpn === 'unhealthy' && getProfile().vpnEnabled;
   switch (pathname) {
+    case '/api/torrent/add': {
+      const magnet = (search.get('magnet') || '').trim();
+      const category = (search.get('category') || '').trim();
+      if (!magnet) { sendJson(res, 400, { ok: false, error: 'magnet richiesto' }); break; }
+      if (vpnGuard) { sendJson(res, 403, { ok: false, error: 'VPN giu\'' }); break; }
+      const code = await QB.addMagnet(magnet, category);
+      sendJson(res, code === 200 ? 200 : 502, { ok: code === 200, http: code });
+      break;
+    }
     case '/api/torrent/pause':
       if (hashes.length) { await QB.stopHashes(hashes); sendJson(res, 200, { ok: true, action: 'pause', hash }); }
       else { await QB.stopAll(); sendJson(res, 200, { ok: true, action: 'pause' }); }
@@ -248,7 +310,7 @@ export function startHealthServer(port = 5192): http.Server {
         });
         res.end();
       } else if (req.method === 'GET') {
-        await handleGet(pathname, res);
+        await handleGet(pathname, url.searchParams, res);
       } else if (req.method === 'POST') {
         await handlePost(pathname, url.searchParams, res);
       } else {

@@ -179,3 +179,31 @@ export async function removeSource(id: string): Promise<boolean> {
   const res = await fetch(`${API}/api/sources/remove?id=${id}`, { method: 'POST' });
   return res.ok;
 }
+
+export interface SearchResult {
+  title: string;
+  size: number;
+  seeders: number;
+  leechers: number;
+  grabs: number;
+  indexer: string;
+  category: string;
+  publishDate: string | null;
+  ageHours: number | null;
+  infoUrl: string;
+  magnet: string;
+}
+
+export async function searchTorrents(q: string, category = 'all', limit = 50): Promise<SearchResult[]> {
+  const p = new URLSearchParams({ q, category, limit: String(limit) });
+  const res = await fetch(`${API}/api/search?${p}`);
+  if (!res.ok) throw new Error(`search HTTP ${res.status}`);
+  const data = await res.json();
+  return data.results || [];
+}
+
+export async function addTorrent(magnet: string, category = ''): Promise<boolean> {
+  const p = new URLSearchParams({ magnet, category });
+  const res = await fetch(`${API}/api/torrent/add?${p}`, { method: 'POST' });
+  return res.ok;
+}

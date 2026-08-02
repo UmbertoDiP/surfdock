@@ -154,6 +154,11 @@ class Qbit {
   setDownloadLimit(bytes: number) {
     return this.post('transfer/setDownloadLimit', { limit: String(bytes <= 0 ? 0 : bytes) });
   }
+  addMagnet(magnet: string, category = '') {
+    const data: Record<string, string> = { urls: magnet };
+    if (category) data.category = category;
+    return this.post('torrents/add', data);
+  }
 }
 
 export const QB = new Qbit();

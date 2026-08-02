@@ -11,15 +11,17 @@ import { DemonsPanel } from './components/DemonsPanel';
 import { StartupProgress as StartupPanel } from './components/StartupProgress';
 import { RegistrationModal } from './components/RegistrationModal';
 import { SourcesModal } from './components/SourcesModal';
+import { TorrentSearchModal } from './components/TorrentSearchModal';
 import { SetupWizard } from './components/SetupWizard';
 import { useEffect, useState } from 'react';
-import { Key, Globe, Settings } from 'lucide-react';
+import { Key, Globe, Settings, Search } from 'lucide-react';
 
 export default function App() {
   const { state, error } = useStatePolling(3000);
   const [startup, setStartup] = useState<StartupProgress | null>(null);
   const [showLicense, setShowLicense] = useState(false);
   const [showSources, setShowSources] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
@@ -85,6 +87,9 @@ export default function App() {
             <button onClick={() => setShowSources(true)} className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--surface-3)] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">
               <Globe size={11} /><span className="text-[11px]">Fonti</span>
             </button>
+            <button onClick={() => setShowSearch(true)} className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--surface-3)] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">
+              <Search size={11} /><span className="text-[11px]">Cerca</span>
+            </button>
             <button
               onClick={() => setShowLicense(true)}
               className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--surface-3)] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors"
@@ -98,6 +103,7 @@ export default function App() {
 
       <RegistrationModal open={showLicense} onClose={() => setShowLicense(false)} />
       <SourcesModal open={showSources} onClose={() => setShowSources(false)} />
+      <TorrentSearchModal open={showSearch} onClose={() => setShowSearch(false)} />
       <SetupWizard
         open={showSetup}
         onClose={() => setShowSetup(false)}

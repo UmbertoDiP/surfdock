@@ -22,6 +22,8 @@ interface LocalConfig {
   stripeBasicUrl?: string;
   stripeDevUrl?: string;
   adminEmail?: string;
+  prowlarrUrl?: string;
+  prowlarrApiKey?: string;
   corsaroNero?: { announceUrl?: string; username?: string; password?: string };
 }
 
@@ -55,6 +57,10 @@ export const GLUETUN_CT = env('SURFDOCK_GLUETUN_CT') ?? local.gluetunCt ?? 'glue
 
 export const STRIPE_BASIC_URL = env('SURFDOCK_STRIPE_BASIC') ?? local.stripeBasicUrl ?? '';
 export const STRIPE_DEV_URL = env('SURFDOCK_STRIPE_DEV') ?? local.stripeDevUrl ?? '';
+
+// Prowlarr: motore di ricerca torrent multi-tracker (API v1).
+export const PROWLARR_URL = env('SURFDOCK_PROWLARR_URL') ?? local.prowlarrUrl ?? 'http://localhost:9696';
+export const PROWLARR_KEY = env('SURFDOCK_PROWLARR_KEY') ?? local.prowlarrApiKey ?? '';
 
 // Account admin del prodotto: solo lui riceve l'auto-configurazione dei tracker privati.
 export const ADMIN_EMAIL = (env('SURFDOCK_ADMIN_EMAIL') ?? local.adminEmail ?? '').toLowerCase();
