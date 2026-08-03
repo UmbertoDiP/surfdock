@@ -12,6 +12,9 @@ export interface SentinelState {
   sunshine: string;
   games_manager: string;
   license_tier: string;
+  gate_unlocked: boolean;
+  gate_until: string | null;
+  gate_remaining: number;
 }
 
 export interface StartupProgress {

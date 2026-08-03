@@ -13,6 +13,7 @@ import { RegistrationModal } from './components/RegistrationModal';
 import { SourcesModal } from './components/SourcesModal';
 import { TorrentSearchModal } from './components/TorrentSearchModal';
 import { SetupWizard } from './components/SetupWizard';
+import { GateUnlock } from './components/GateUnlock';
 import { useEffect, useState } from 'react';
 import { Key, Globe, Settings, Search } from 'lucide-react';
 
@@ -71,12 +72,12 @@ export default function App() {
         <DemonsPanel />
 
         <div className="mx-4 px-4 py-1.5 rounded-xl bg-[var(--surface-2)] border border-[var(--border-light)] flex items-center justify-between text-xs">
+          <GateUnlock
+            gateDown={state.iron_gate_down}
+            unlocked={state.gate_unlocked}
+            remainingSec={state.gate_remaining}
+          />
           <span className="text-[var(--text-muted)]">
-            {state.iron_gate_down ? (
-              <span className="text-[var(--danger)] font-semibold">Iron Gate DOWN</span>
-            ) : (
-              <span className="text-[var(--success)] font-semibold">ARMED</span>
-            )}
             {' · '}
             {state.vpn === 'healthy' ? 'Iron Gate 6/6' : `VPN: ${state.vpn_detail}`}
           </span>
