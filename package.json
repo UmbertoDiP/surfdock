@@ -32,7 +32,8 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "assets/surfdock-icon.ico"
+      "icon": "assets/surfdock-icon.ico",
+      "artifactName": "${productName} Setup ${version}.${ext}"
     },
     "nsis": {
       "license": "eula.txt"
