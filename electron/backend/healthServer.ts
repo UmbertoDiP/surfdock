@@ -24,6 +24,15 @@ function sendJson(res: http.ServerResponse, code: number, data: any) {
   res.end(body);
 }
 
+const ALLOWED_ORIGINS = new Set(['null', 'http://127.0.0.1:5174', 'http://localhost:5174']);
+
+// Solo il renderer Electron (file:// -> Origin null, dev vite -> 127.0.0.1:5174) e i client senza Origin (curl) possono parlare con l'API locale.
+function originAllowed(req: http.IncomingMessage): boolean {
+  const origin = req.headers.origin;
+  if (!origin) return true;
+  return ALLOWED_ORIGINS.has(origin);
+}
+
 const CATEGORY_IDS: Record<string, number> = { movies: 2000, tv: 5000, audio: 3000, pc: 4000 };
 function categoryName(raw: any[]): string {
   for (const c of raw ?? []) {
@@ -321,6 +330,7 @@ export function startHealthServer(port = 5192): http.Server {
       const url = new URL(req.url || '/', 'http://localhost');
       const pathname = url.pathname;
       if (req.method === 'OPTIONS') {
+        if (!originAllowed(req)) { sendJson(res, 403, { error: 'origine non consentita' }); return; }
         res.writeHead(204, {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -328,8 +338,10 @@ export function startHealthServer(port = 5192): http.Server {
         });
         res.end();
       } else if (req.method === 'GET') {
+        if (!originAllowed(req)) { sendJson(res, 403, { error: 'origine non consentita' }); return; }
         await handleGet(pathname, url.searchParams, res);
       } else if (req.method === 'POST') {
+        if (!originAllowed(req)) { sendJson(res, 403, { error: 'origine non consentita' }); return; }
         await handlePost(pathname, url.searchParams, res);
       } else {
         sendJson(res, 405, { error: 'method not allowed' });
