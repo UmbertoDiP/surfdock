@@ -10,6 +10,7 @@ import { QB, qbitApiAlive } from './qbit';
 import { run, clearFlag, writeFlag } from './probes';
 import { setStartupPhase, dockerReady } from './state';
 import { getProfile } from './profile';
+import { isGateUnlocked } from './gateUnlock';
 
 type CheckResult = [boolean, string];
 
@@ -210,7 +211,9 @@ export async function ironGatePoller(notify: NotifyFn, stop: () => boolean): Pro
       }
       const { ok, failed } = await runIronGate();
       if (!ok) {
-        if (!ironGate.vpnDown) {
+        if (isGateUnlocked()) {
+          igLog("[GATE] guardia GIU', unlock attivo: enforcement sospeso, diagnostica continua");
+        } else if (!ironGate.vpnDown) {
           await onVpnDown(failed);
           notify('SurfDock - VPN GIU\'', `Iron Gate fallito (${failed.length} test). Torrent bloccati, Jellyfin resta in LAN.`);
           ironGate.vpnDown = true;

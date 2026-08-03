@@ -10,6 +10,7 @@ import { ironGate, spawnDetached } from './ironGate';
 import { getLicense, activateLicense, clearLicense } from './license';
 import { getSources, addSource, removeSource } from './sources';
 import { getProfile, setEmail, setVpnEnabled, addVpnConnector, removeVpnConnector, markWizardDone } from './profile';
+import { unlockGate, armGate, getGateUnlockState, isGateUnlocked } from './gateUnlock';
 
 function sendJson(res: http.ServerResponse, code: number, data: any) {
   const body = JSON.stringify(data, null, 2);
@@ -70,6 +71,7 @@ async function handleGet(pathname: string, search: URLSearchParams, res: http.Se
     const dup = Object.values(d).filter(v => v === 'running').length;
     const sp = startupProgress();
     const lic = getLicense();
+    const gs = getGateUnlockState();
     sendJson(res, 200, {
       status: 'ok',
       vpn: STATE.vpn,
@@ -85,6 +87,9 @@ async function handleGet(pathname: string, search: URLSearchParams, res: http.Se
       games_manager: STATE.games,
       license_tier: lic.tier,
       vpn_enabled: getProfile().vpnEnabled,
+      gate_unlocked: gs.unlocked,
+      gate_until: gs.until,
+      gate_remaining: gs.remainingSec,
     });
   } else if (pathname === '/api/startup') {
     sendJson(res, 200, startupProgress());
@@ -148,7 +153,7 @@ async function handleGet(pathname: string, search: URLSearchParams, res: http.Se
 async function handlePost(pathname: string, search: URLSearchParams, res: http.ServerResponse) {
   const hash = (search.get('hash') || '').trim();
   const hashes = hash ? [hash] : [];
-  const vpnGuard = STATE.vpn === 'unhealthy' && getProfile().vpnEnabled;
+  const vpnGuard = STATE.vpn === 'unhealthy' && getProfile().vpnEnabled && !isGateUnlocked();
   switch (pathname) {
     case '/api/torrent/add': {
       const magnet = (search.get('magnet') || '').trim();
@@ -290,6 +295,19 @@ async function handlePost(pathname: string, search: URLSearchParams, res: http.S
     case '/api/profile/wizard/done': {
       const profile = markWizardDone();
       sendJson(res, 200, { ok: true, profile });
+      break;
+    }
+    case '/api/gate/unlock': {
+      const raw = search.get('minutes');
+      const minutes = raw ? parseInt(raw, 10) : 15;
+      if (Number.isNaN(minutes)) { sendJson(res, 400, { ok: false, error: 'minutes non valido' }); break; }
+      const gs = unlockGate(minutes);
+      sendJson(res, 200, { ok: true, ...gs });
+      break;
+    }
+    case '/api/gate/arm': {
+      const gs = armGate();
+      sendJson(res, 200, { ok: true, ...gs });
       break;
     }
     default:
