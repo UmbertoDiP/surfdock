@@ -433,6 +433,14 @@ export function SetupWizard({ open, onClose, onProfileChange }: { open: boolean;
             <ChevronLeft size={15} /> {D.back}
           </button>
 
+          {step === 0 && (
+            <button
+              onClick={() => setStep(1)}
+              className="flex items-center gap-1 px-5 py-2 rounded-lg bg-[var(--accent)] text-white font-semibold text-sm hover:brightness-110 transition-all"
+            >
+              {D.next} <ChevronRight size={15} />
+            </button>
+          )}
           {step === 1 && (
             <button
               onClick={() => setStep(s => s + 1)}
