@@ -24,8 +24,18 @@ app.setPath('logs', path.join(app.getPath('userData'), 'logs'));
 
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
 if (!gotSingleInstanceLock) {
+  console.log('[SurfDock] Single instance lock not obtained. Another instance may be running or a stale lock exists.');
+  console.log('[SurfDock] userData:', app.getPath('userData'));
   app.quit();
+  process.exit(0);
 }
+
+app.on('second-instance', () => {
+  if (appState.mainWindow) {
+    if (appState.mainWindow.isMinimized()) appState.mainWindow.restore();
+    appState.mainWindow.focus();
+  }
+});
 
 // Sostituisce il vecchio .lnk python: login item nativo (Windows/macOS, dev e prod).
 // Su Linux il login item non e' gestito da Electron: si usa un .desktop autostart manuale.
