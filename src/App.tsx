@@ -14,10 +14,12 @@ import { SourcesModal } from './components/SourcesModal';
 import { TorrentSearchModal } from './components/TorrentSearchModal';
 import { SetupWizard } from './components/SetupWizard';
 import { GateUnlock } from './components/GateUnlock';
+import { useLanguage } from './i18n/LanguageContext';
 import { useEffect, useState } from 'react';
 import { Key, Globe, Settings, Search } from 'lucide-react';
 
 export default function App() {
+  const { t } = useLanguage();
   const { state, error } = useStatePolling(3000);
   const [startup, setStartup] = useState<StartupProgress | null>(null);
   const [showLicense, setShowLicense] = useState(false);
@@ -49,7 +51,7 @@ export default function App() {
       <div className="h-screen flex items-center justify-center bg-[var(--surface-1)]">
         <div className="text-center space-y-4">
           <div className="w-12 h-12 mx-auto rounded-2xl bg-[var(--accent)] animate-pulse" />
-          <div className="text-[var(--text-main)] font-semibold">Connessione al demone SurfDock...</div>
+          <div className="text-[var(--text-main)] font-semibold">{t('app.loading')}</div>
           {error && <div className="text-sm text-[var(--danger)]">{error}</div>}
         </div>
       </div>
@@ -79,24 +81,24 @@ export default function App() {
           />
           <span className="text-[var(--text-muted)]">
             {' · '}
-            {state.vpn === 'healthy' ? 'Iron Gate 6/6' : `VPN: ${state.vpn_detail}`}
+            {state.vpn === 'healthy' ? t('status.iron_gate') : `VPN: ${state.vpn_detail}`}
           </span>
           <span className="flex items-center gap-2">
             <button onClick={() => setShowSetup(true)} className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--surface-3)] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">
-              <Settings size={11} /><span className="text-[11px]">Configura</span>
+              <Settings size={11} /><span className="text-[11px]">{t('footer.configura')}</span>
             </button>
             <button onClick={() => setShowSources(true)} className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--surface-3)] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">
-              <Globe size={11} /><span className="text-[11px]">Fonti</span>
+              <Globe size={11} /><span className="text-[11px]">{t('footer.fonti')}</span>
             </button>
             <button onClick={() => setShowSearch(true)} className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--surface-3)] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">
-              <Search size={11} /><span className="text-[11px]">Cerca</span>
+              <Search size={11} /><span className="text-[11px]">{t('footer.cerca')}</span>
             </button>
             <button
               onClick={() => setShowLicense(true)}
               className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--surface-3)] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors"
             >
               <Key size={11} />
-              <span>{state.license_tier === 'none' ? 'Free' : state.license_tier === 'basic' ? 'Basic' : 'Dev'}</span>
+              <span>{state.license_tier === 'none' ? t('footer.free') : state.license_tier === 'basic' ? t('footer.basic') : t('footer.dev')}</span>
             </button>
           </span>
         </div>

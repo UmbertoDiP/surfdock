@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pause, Play, Zap, RefreshCw, Trash2, Loader2, ZoomOut, ZoomIn } from 'lucide-react';
 import { SentinelState, TorrentDetail, fetchTorrents, apiPost } from '../hooks/usePolling';
 import { RateLimitSlider } from './RateLimitSlider';
+import { useLanguage } from '../i18n/LanguageContext';
 
 function humanSpeed(b: number): string {
   if (b <= 0) return '0 B';
@@ -27,29 +28,33 @@ function humanEta(sec: number): string {
   return `${sec}s`;
 }
 
-function stateLabel(state: string): string {
-  const map: Record<string, string> = {
-    downloading: 'download',
-    pausedDL: 'in pausa',
+function stateLabel(state: string, t: (key: string) => string): string {
+  const keys: Record<string, string> = {
+    downloading: 'torrent.download',
+    pausedDL: 'torrent.paused',
+    metaDL: 'torrent.metadata',
+    checkingDL: 'torrent.checking',
+    checkingUP: 'torrent.checking',
+    checkingResumeData: 'torrent.checking',
+    stoppedDL: 'torrent.stopped',
+    stoppedUP: 'torrent.stopped',
+    forcedDL: 'torrent.forced',
+    forcedUP: 'torrent.forced',
+    allocating: 'torrent.allocating',
+    error: 'torrent.error',
+    moving: 'torrent.moving',
+  };
+  const raw: Record<string, string> = {
     uploading: 'upload',
     pausedUP: 'pausa upload',
     queuedDL: 'in coda',
     queuedUP: 'coda upload',
     stalledDL: 'senza peer',
     stalledUP: 'stallo',
-    metaDL: 'metadati...',
-    checkingDL: 'verifica',
-    checkingUP: 'verifica',
-    checkingResumeData: 'verifica',
-    stoppedDL: 'fermo',
-    stoppedUP: 'fermo',
-    forcedDL: 'forzato',
-    forcedUP: 'forzato',
-    allocating: 'allocazione',
-    error: 'errore',
-    moving: 'spostamento',
   };
-  return map[state] ?? state;
+  const k = keys[state];
+  if (k) return t(k);
+  return raw[state] ?? state;
 }
 
 const stateColor: Record<string, string> = {
@@ -95,7 +100,8 @@ function IconBtn({ title, onClick, acting, primary, danger, children }: {
 }
 
 export function TorrentPanel({ state }: { state: SentinelState }) {
-  const t = state.torrent;
+  const { t } = useLanguage();
+  const stats = state.torrent;
   const [torrents, setTorrents] = useState<TorrentDetail[]>([]);
   const [live, setLive] = useState(false);
   const [acting, setActing] = useState<Record<string, string>>({});
@@ -156,30 +162,30 @@ export function TorrentPanel({ state }: { state: SentinelState }) {
       <div className="flex items-center justify-between mb-2">
         <div className="text-xs font-bold text-[var(--accent)] uppercase tracking-wider">Qbittorrent</div>
         <span className="text-[10px] text-[var(--text-muted)]">
-          {live ? 'aggiornato in tempo reale' : 'offline / in avvio'}
+          {live ? t('torrent.realtime') : t('torrent.offline')}
         </span>
       </div>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-4 text-sm">
-          <span className="text-[var(--success)] font-bold">{t.dl} download</span>
-          <span className="text-[var(--text-secondary)]">{t.paused} pausa</span>
-          <span className="text-[var(--text-secondary)]">{t.seed} seed</span>
+          <span className="text-[var(--success)] font-bold">{stats.dl} {t('torrent.download')}</span>
+          <span className="text-[var(--text-secondary)]">{stats.paused} {t('torrent.paused')}</span>
+          <span className="text-[var(--text-secondary)]">{stats.seed} {t('torrent.seed')}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-0.5">
             <IconBtn title="Zoom out (meno colonne)" onClick={() => changeZoom(-1)}>
               <ZoomOut size={14} />
             </IconBtn>
-            <span className="text-[10px] text-[var(--text-muted)] w-6 text-center tabular-nums">{zoom} col</span>
+            <span className="text-[10px] text-[var(--text-muted)] w-6 text-center tabular-nums">{zoom} {t('torrent.col')}</span>
             <IconBtn title="Zoom in (piu colonne)" onClick={() => changeZoom(1)}>
               <ZoomIn size={14} />
             </IconBtn>
           </div>
-          <span className="text-xs text-[var(--text-muted)]">tot {t.total}</span>
+          <span className="text-xs text-[var(--text-muted)]">{t('torrent.tot')} {stats.total}</span>
         </div>
       </div>
 
-      <RateLimitSlider speedKb={t.speed_kb ?? 0} />
+      <RateLimitSlider speedKb={stats.speed_kb ?? 0} />
 
       {torrents.length === 0 ? (
         <div className="text-xs text-[var(--text-muted)] py-2">Nessun download in corso</div>
@@ -206,7 +212,7 @@ export function TorrentPanel({ state }: { state: SentinelState }) {
                     className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide"
                     style={{ background: 'var(--surface-2)', color: stateColor[tor.state] ?? 'var(--text-secondary)' }}
                   >
-                    {stateLabel(tor.state)}
+                    {stateLabel(tor.state, t)}
                   </span>
                 </div>
 

@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { X, Search, Download, Loader2, ArrowUpDown, Film, Tv, Music, Monitor, Tag } from 'lucide-react';
 import { searchTorrents, addTorrent, SearchResult } from '../hooks/usePolling';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const CATEGORIES = [
-  { id: 'all', label: 'Tutti', icon: Tag },
-  { id: 'movies', label: 'Film', icon: Film },
-  { id: 'tv', label: 'Serie TV', icon: Tv },
-  { id: 'audio', label: 'Audio', icon: Music },
-  { id: 'pc', label: 'Software', icon: Monitor },
+  { id: 'all', labelKey: 'search.all', icon: Tag },
+  { id: 'movies', labelKey: 'search.movies', icon: Film },
+  { id: 'tv', labelKey: 'search.tv', icon: Tv },
+  { id: 'audio', labelKey: 'search.audio', icon: Music },
+  { id: 'pc', labelKey: 'search.software', icon: Monitor },
 ];
 
 const ICONS: Record<string, typeof Tag> = { Movie: Film, TV: Tv, Audio: Music, PC: Monitor };
@@ -38,6 +39,7 @@ export function TorrentSearchModal({ open, onClose }: { open: boolean; onClose: 
   const [adding, setAdding] = useState<string | null>(null);
   const [added, setAdded] = useState<Set<string>>(new Set());
   const [minSeeders, setMinSeeders] = useState(0);
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (open) {
@@ -85,14 +87,16 @@ export function TorrentSearchModal({ open, onClose }: { open: boolean; onClose: 
       return b.seeders - a.seeders;
     });
 
+  if (!open) return null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
       <div className="relative w-full max-w-3xl mx-4 max-h-[85vh] overflow-y-auto rounded-2xl bg-[var(--surface-1)] border border-[var(--border-light)] shadow-2xl p-5" onClick={e => e.stopPropagation()}>
         <button onClick={onClose} className="absolute top-4 right-4 p-1 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--surface-3)] transition-colors">
           <X size={20} />
         </button>
-        <h2 className="text-lg font-bold text-[var(--text-main)] mb-1">Ricerca torrent</h2>
-        <p className="text-xs text-[var(--text-muted)] mb-4">Cerca su tutti i tracker configurati in Prowlarr.</p>
+        <h2 className="text-lg font-bold text-[var(--text-main)] mb-1">{t('search.title')}</h2>
+        <p className="text-xs text-[var(--text-muted)] mb-4">{t('search.desc')}</p>
 
         <div className="flex gap-2 mb-3">
           <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-light)] focus-within:border-[var(--accent)] transition-colors">
@@ -101,13 +105,13 @@ export function TorrentSearchModal({ open, onClose }: { open: boolean; onClose: 
               value={query}
               onChange={e => setQuery(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && runSearch()}
-              placeholder="Cerca un film, serie, album o software..."
+              placeholder={t('search.placeholder')}
               className="flex-1 bg-transparent text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)] outline-none"
             />
           </div>
           <button onClick={runSearch} disabled={loading || !query.trim()} className="px-4 py-2 rounded-xl bg-[var(--accent)] text-white text-sm font-semibold disabled:opacity-40 hover:brightness-110 transition-all flex items-center gap-2">
             {loading ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />}
-            Cerca
+            {t('search.btn')}
           </button>
         </div>
 
@@ -118,7 +122,7 @@ export function TorrentSearchModal({ open, onClose }: { open: boolean; onClose: 
               onClick={() => setCategory(c.id)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${category === c.id ? 'bg-[var(--accent)] text-white' : 'bg-[var(--surface-3)] text-[var(--text-secondary)] hover:text-[var(--text-main)]'}`}
             >
-              <c.icon size={13} /> {c.label}
+              <c.icon size={13} /> {t(c.labelKey)}
             </button>
           ))}
           <div className="flex-1" />
@@ -134,19 +138,19 @@ export function TorrentSearchModal({ open, onClose }: { open: boolean; onClose: 
           </label>
           <button onClick={() => setSortBy(sortBy === 'seeders' ? 'size' : sortBy === 'size' ? 'age' : 'seeders')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--surface-3)] text-[var(--text-secondary)] hover:text-[var(--text-main)] text-xs font-semibold transition-all">
             <ArrowUpDown size={13} />
-            {sortBy === 'seeders' ? 'Seed' : sortBy === 'size' ? 'Dimensione' : 'Data'}
+            {sortBy === 'seeders' ? t('search.seed') : sortBy === 'size' ? t('search.size') : t('search.date')}
           </button>
         </div>
 
         {error && <div className="mb-3 p-3 rounded-xl bg-[var(--danger)]/10 border border-[var(--danger)]/30 text-sm text-[var(--danger)]">{error}</div>}
 
         {results.length > 0 && !loading && (
-          <div className="mb-2 text-xs text-[var(--text-muted)]">{sorted.length} risultati</div>
+          <div className="mb-2 text-xs text-[var(--text-muted)]">{sorted.length} {t('search.results')}</div>
         )}
 
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-10 text-[var(--text-muted)]">
-            <Loader2 size={20} className="animate-spin" /> Ricerca in corso...
+            <Loader2 size={20} className="animate-spin" /> {t('search.searching')}
           </div>
         ) : sorted.length === 0 ? (
           <div className="text-sm text-[var(--text-muted)] py-8 text-center">Nessun risultato. Prova un'altra query o cambia filtro.</div>
@@ -163,7 +167,7 @@ export function TorrentSearchModal({ open, onClose }: { open: boolean; onClose: 
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold text-[var(--text-main)] leading-snug">{r.title}</div>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-[var(--text-muted)] mt-1">
-                      <span className="text-[var(--success)] font-semibold">{r.seeders} seed</span>
+                      <span className="text-[var(--success)] font-semibold">{r.seeders} {t('search.seed')}</span>
                       <span className="text-[var(--text-secondary)]">{r.leechers} leech</span>
                       <span>{fmtSize(r.size)}</span>
                       <span>{fmtAge(r.ageHours)}</span>

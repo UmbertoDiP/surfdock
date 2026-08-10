@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { X, Plus, Trash2, Globe, Lock } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface TrackerSource {
   id: string;
@@ -34,6 +35,7 @@ export function SourcesModal({ open, onClose }: { open: boolean; onClose: () => 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', announceUrl: '', username: '', password: '' });
   const [saving, setSaving] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (open) load();
@@ -58,17 +60,19 @@ export function SourcesModal({ open, onClose }: { open: boolean; onClose: () => 
     load();
   }
 
+  if (!open) return null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
       <div className="relative w-full max-w-lg mx-4 max-h-[80vh] overflow-y-auto rounded-2xl bg-[var(--surface-1)] border border-[var(--border-light)] shadow-2xl p-5" onClick={e => e.stopPropagation()}>
         <button onClick={onClose} className="absolute top-4 right-4 p-1 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--surface-3)] transition-colors">
           <X size={20} />
         </button>
-        <h2 className="text-lg font-bold text-[var(--text-main)] mb-1">Tracker personalizzati</h2>
-        <p className="text-xs text-[var(--text-muted)] mb-4">Aggiungi le tue fonti torrent (tracker) con credenziali. I dati restano in locale, mai inviati.</p>
+        <h2 className="text-lg font-bold text-[var(--text-main)] mb-1">{t('sources.title')}</h2>
+        <p className="text-xs text-[var(--text-muted)] mb-4">{t('sources.desc')}</p>
 
         {sources.length === 0 && !showForm && (
-          <div className="text-sm text-[var(--text-muted)] py-6 text-center">Nessuna fonte configurata.</div>
+          <div className="text-sm text-[var(--text-muted)] py-6 text-center">{t('sources.empty')}</div>
         )}
 
         <div className="space-y-2">
@@ -103,8 +107,8 @@ export function SourcesModal({ open, onClose }: { open: boolean; onClose: () => 
               <input type="password" placeholder="Password (opzionale)" value={form.password} onChange={e => setForm(f => ({...f, password: e.target.value }))} className="w-full px-3 py-2 rounded-lg bg-[var(--surface-1)] border border-[var(--border-light)] text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--accent)]" />
             </div>
             <div className="flex gap-2">
-              <button onClick={() => setShowForm(false)} className="flex-1 py-2 rounded-lg bg-[var(--surface-3)] text-[var(--text-secondary)] text-sm font-semibold hover:text-[var(--text-main)] transition-colors">Annulla</button>
-              <button onClick={handleAdd} disabled={saving || !form.name || !form.announceUrl} className="flex-1 py-2 rounded-lg bg-[var(--accent)] text-white text-sm font-semibold disabled:opacity-40 hover:brightness-110 transition-all">{saving ? 'Salvataggio...' : 'Aggiungi'}</button>
+              <button onClick={() => setShowForm(false)} className="flex-1 py-2 rounded-lg bg-[var(--surface-3)] text-[var(--text-secondary)] text-sm font-semibold hover:text-[var(--text-main)] transition-colors">{t('sources.cancel')}</button>
+              <button onClick={handleAdd} disabled={saving || !form.name || !form.announceUrl} className="flex-1 py-2 rounded-lg bg-[var(--accent)] text-white text-sm font-semibold disabled:opacity-40 hover:brightness-110 transition-all">{saving ? t('sources.saving') : t('sources.add')}</button>
             </div>
           </div>
         )}

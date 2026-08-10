@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { fetchLicense, activateLicense, clearLicense } from '../hooks/usePolling';
 import { X, Key, ExternalLink, CheckCircle2, CreditCard } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface LicenseInfo {
   ok: boolean;
@@ -72,7 +73,7 @@ const DICT: Record<string, Record<string, string>> = {
   },
 };
 
-function t(key: string, lang: Lang): string {
+function dictT(key: string, lang: Lang): string {
   return DICT[lang]?.[key] ?? key;
 }
 
@@ -93,6 +94,7 @@ function Toggle({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => void }) {
 }
 
 export function RegistrationModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useLanguage();
   const [lang, setLang] = useState<Lang>('it');
   const [license, setLicense] = useState<LicenseInfo | null>(null);
   const [keyInput, setKeyInput] = useState('');
@@ -153,18 +155,18 @@ export function RegistrationModal({ open, onClose }: { open: boolean; onClose: (
           <X size={20} />
         </button>
 
-        <h2 className="text-xl font-bold text-[var(--text-main)] mb-1">{t('title', lang)}</h2>
+        <h2 className="text-xl font-bold text-[var(--text-main)] mb-1">{t('license.title')}</h2>
 
         {/* License status */}
         <div className="flex items-center gap-2 mb-5 text-sm">
-          <span className="text-[var(--text-secondary)]">{t('status', lang)}:</span>
+          <span className="text-[var(--text-secondary)]">{dictT('status', lang)}:</span>
           {isRegistered ? (
             <span className="flex items-center gap-1 text-[var(--success)] font-semibold">
               <CheckCircle2 size={16} />
-              {license!.tier === 'basic' ? t('basic', lang) : t('dev', lang)}
+              {license!.tier === 'basic' ? dictT('basic', lang) : dictT('dev', lang)}
             </span>
           ) : (
-            <span className="text-[var(--text-muted)]">{t('free', lang)}</span>
+            <span className="text-[var(--text-muted)]">{dictT('free', lang)}</span>
           )}
         </div>
 
@@ -181,20 +183,20 @@ export function RegistrationModal({ open, onClose }: { open: boolean; onClose: (
             {/* Basic */}
             <div className="rounded-xl bg-[var(--surface-2)] border border-[var(--border-light)] p-4 flex flex-col gap-3">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-[var(--text-main)] text-lg">{t('basic', lang)}</h3>
+                <h3 className="font-bold text-[var(--text-main)] text-lg">{dictT('basic', lang)}</h3>
                 <span className="text-xs font-semibold text-[var(--accent)] bg-[var(--accent)]/10 px-2 py-0.5 rounded-full">29 EUR</span>
               </div>
               <ul className="text-xs text-[var(--text-secondary)] space-y-1.5">
-                <li className="flex items-start gap-1.5"><CheckCircle2 size={12} className="mt-0.5 shrink-0 text-[var(--success)]" />{t('basicFeat1', lang)}</li>
-                <li className="flex items-start gap-1.5"><CheckCircle2 size={12} className="mt-0.5 shrink-0 text-[var(--success)]" />{t('basicFeat2', lang)}</li>
-                <li className="flex items-start gap-1.5"><CheckCircle2 size={12} className="mt-0.5 shrink-0 text-[var(--success)]" />{t('basicFeat3', lang)}</li>
-                <li className="flex items-start gap-1.5"><CheckCircle2 size={12} className="mt-0.5 shrink-0 text-[var(--success)]" />{t('basicFeat4', lang)}</li>
+                <li className="flex items-start gap-1.5"><CheckCircle2 size={12} className="mt-0.5 shrink-0 text-[var(--success)]" />{dictT('basicFeat1', lang)}</li>
+                <li className="flex items-start gap-1.5"><CheckCircle2 size={12} className="mt-0.5 shrink-0 text-[var(--success)]" />{dictT('basicFeat2', lang)}</li>
+                <li className="flex items-start gap-1.5"><CheckCircle2 size={12} className="mt-0.5 shrink-0 text-[var(--success)]" />{dictT('basicFeat3', lang)}</li>
+                <li className="flex items-start gap-1.5"><CheckCircle2 size={12} className="mt-0.5 shrink-0 text-[var(--success)]" />{dictT('basicFeat4', lang)}</li>
               </ul>
               <button
                 onClick={() => openStripe(stripeBasic)}
                 className="mt-auto w-full py-2 rounded-lg bg-[var(--accent)] text-white font-semibold text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2"
               >
-                <CreditCard size={14} />{t('buyBasic', lang)}
+                <CreditCard size={14} />{dictT('buyBasic', lang)}
               </button>
             </div>
             {/* Dev */}
@@ -203,20 +205,20 @@ export function RegistrationModal({ open, onClose }: { open: boolean; onClose: (
                 {lang === 'it' ? 'MIGLIOR VALORE' : 'BEST VALUE'}
               </div>
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-[var(--text-main)] text-lg">{t('dev', lang)}</h3>
+                <h3 className="font-bold text-[var(--text-main)] text-lg">{dictT('dev', lang)}</h3>
                 <span className="text-xs font-semibold text-[var(--accent)] bg-[var(--accent)]/10 px-2 py-0.5 rounded-full">79 EUR</span>
               </div>
               <ul className="text-xs text-[var(--text-secondary)] space-y-1.5">
-                <li className="flex items-start gap-1.5"><CheckCircle2 size={12} className="mt-0.5 shrink-0 text-[var(--success)]" />{t('devFeat1', lang)}</li>
-                <li className="flex items-start gap-1.5"><CheckCircle2 size={12} className="mt-0.5 shrink-0 text-[var(--success)]" />{t('devFeat2', lang)}</li>
-                <li className="flex items-start gap-1.5"><CheckCircle2 size={12} className="mt-0.5 shrink-0 text-[var(--success)]" />{t('devFeat3', lang)}</li>
-                <li className="flex items-start gap-1.5"><CheckCircle2 size={12} className="mt-0.5 shrink-0 text-[var(--success)]" />{t('devFeat4', lang)}</li>
+                <li className="flex items-start gap-1.5"><CheckCircle2 size={12} className="mt-0.5 shrink-0 text-[var(--success)]" />{dictT('devFeat1', lang)}</li>
+                <li className="flex items-start gap-1.5"><CheckCircle2 size={12} className="mt-0.5 shrink-0 text-[var(--success)]" />{dictT('devFeat2', lang)}</li>
+                <li className="flex items-start gap-1.5"><CheckCircle2 size={12} className="mt-0.5 shrink-0 text-[var(--success)]" />{dictT('devFeat3', lang)}</li>
+                <li className="flex items-start gap-1.5"><CheckCircle2 size={12} className="mt-0.5 shrink-0 text-[var(--success)]" />{dictT('devFeat4', lang)}</li>
               </ul>
               <button
                 onClick={() => openStripe(stripeDev)}
                 className="mt-auto w-full py-2 rounded-lg bg-gradient-to-r from-[var(--accent)] to-cyan-400 text-white font-semibold text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2"
               >
-                <CreditCard size={14} />{t('buyDev', lang)}
+                <CreditCard size={14} />{dictT('buyDev', lang)}
               </button>
             </div>
           </div>
@@ -225,7 +227,7 @@ export function RegistrationModal({ open, onClose }: { open: boolean; onClose: (
         {/* License key activation */}
         <div className="rounded-xl bg-[var(--surface-2)] border border-[var(--border-light)] p-4">
           <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-[var(--text-secondary)]">
-            <Key size={16} />{t('enterKey', lang)}
+            <Key size={16} />{dictT('enterKey', lang)}
           </div>
           <div className="flex gap-2">
             <input
@@ -240,7 +242,7 @@ export function RegistrationModal({ open, onClose }: { open: boolean; onClose: (
               disabled={activating || !keyInput.trim()}
               className="px-4 py-2 rounded-lg bg-[var(--accent)] text-white font-semibold text-sm disabled:opacity-40 hover:brightness-110 transition-all flex items-center gap-1.5"
             >
-              {activating ? '...' : <><CheckCircle2 size={14} />{t('activate', lang)}</>}
+              {activating ? '...' : <><CheckCircle2 size={14} />{dictT('activate', lang)}</>}
             </button>
           </div>
           {isRegistered && (
@@ -248,7 +250,7 @@ export function RegistrationModal({ open, onClose }: { open: boolean; onClose: (
               onClick={handleClear}
               className="mt-2 text-xs text-[var(--danger)] hover:underline"
             >
-              {t('clear', lang)}
+              {dictT('clear', lang)}
             </button>
           )}
         </div>

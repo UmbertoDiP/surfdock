@@ -8,6 +8,7 @@ import {
   markWizardDone, activateLicense, fetchLicense, fetchSources, addSource, removeSource,
   ProfileResponse, UserProfile, VpnConnector, TrackerSource,
 } from '../hooks/usePolling';
+import { useLanguage } from '../i18n/LanguageContext';
 
 type Lang = 'it' | 'en';
 
@@ -73,7 +74,7 @@ const PROVIDERS: { id: string; labelIt: string; labelEn: string }[] = [
   { id: 'custom', labelIt: 'OpenVPN / Custom', labelEn: 'OpenVPN / Custom' },
 ];
 
-function t(lang: Lang): D {
+function getDict(lang: Lang): D {
   return DICT[lang];
 }
 
@@ -85,6 +86,7 @@ export function SetupWizard({ open, onClose, onProfileChange }: { open: boolean;
   const [sources, setSources] = useState<TrackerSource[]>([]);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
+  const { t } = useLanguage();
 
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -139,7 +141,7 @@ export function SetupWizard({ open, onClose, onProfileChange }: { open: boolean;
         const src = await fetchSources();
         setSources(Array.isArray(src) ? src : []);
       }
-    } catch { setMsg(t(lang).step5Sub); }
+    } catch { setMsg(getDict(lang).step5Sub); }
     setSaving(false);
   }
 
@@ -150,11 +152,11 @@ export function SetupWizard({ open, onClose, onProfileChange }: { open: boolean;
       const res = await activateLicense(keyInput.trim());
       if (res.ok && res.tier !== 'none') {
         setLicenseActive(true);
-        setMsg(t(lang).activated);
+        setMsg(getDict(lang).activated);
       } else {
-        setMsg(t(lang).free);
+        setMsg(getDict(lang).free);
       }
-    } catch { setMsg(t(lang).free); }
+    } catch { setMsg(getDict(lang).free); }
     setSaving(false);
   }
 
@@ -205,7 +207,7 @@ export function SetupWizard({ open, onClose, onProfileChange }: { open: boolean;
   }
 
   if (!open) return null;
-  const D = t(lang);
+  const D = getDict(lang);
   const providerLabel = PROVIDERS.find(p => p.id === vpnProvider);
   const nextDisabled =
     (step === 1 && !email.trim()) ||
@@ -430,7 +432,7 @@ export function SetupWizard({ open, onClose, onProfileChange }: { open: boolean;
             disabled={step === 0}
             className="flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold text-[var(--text-secondary)] hover:text-[var(--text-main)] hover:bg-[var(--surface-3)] transition-colors disabled:opacity-30 disabled:pointer-events-none"
           >
-            <ChevronLeft size={15} /> {D.back}
+            <ChevronLeft size={15} /> {t('wizard.back')}
           </button>
 
           {step === 0 && (
@@ -438,7 +440,7 @@ export function SetupWizard({ open, onClose, onProfileChange }: { open: boolean;
               onClick={() => setStep(1)}
               className="flex items-center gap-1 px-5 py-2 rounded-lg bg-[var(--accent)] text-white font-semibold text-sm hover:brightness-110 transition-all"
             >
-              {D.next} <ChevronRight size={15} />
+              {t('wizard.next')} <ChevronRight size={15} />
             </button>
           )}
           {step === 1 && (
@@ -447,17 +449,17 @@ export function SetupWizard({ open, onClose, onProfileChange }: { open: boolean;
               disabled={nextDisabled}
               className="flex items-center gap-1 px-5 py-2 rounded-lg bg-[var(--accent)] text-white font-semibold text-sm disabled:opacity-40 hover:brightness-110 transition-all"
             >
-              {D.next} <ChevronRight size={15} />
+              {t('wizard.next')} <ChevronRight size={15} />
             </button>
           )}
           {step === 1 && (
             <button onClick={() => setStep(2)} className="px-3 py-2 rounded-lg text-xs text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors">
-              {D.skip}
+              {t('wizard.skip')}
             </button>
           )}
           {step === 2 && (
             <button onClick={() => setStep(3)} className="flex items-center gap-1 px-5 py-2 rounded-lg bg-[var(--accent)] text-white font-semibold text-sm hover:brightness-110 transition-all">
-              {D.next} <ChevronRight size={15} />
+              {t('wizard.next')} <ChevronRight size={15} />
             </button>
           )}
           {step === 3 && (
@@ -466,12 +468,12 @@ export function SetupWizard({ open, onClose, onProfileChange }: { open: boolean;
               disabled={nextDisabled}
               className="flex items-center gap-1 px-5 py-2 rounded-lg bg-[var(--accent)] text-white font-semibold text-sm disabled:opacity-40 hover:brightness-110 transition-all"
             >
-              {D.next} <ChevronRight size={15} />
+              {t('wizard.next')} <ChevronRight size={15} />
             </button>
           )}
           {step === 4 && (
             <button onClick={() => setStep(5)} className="flex items-center gap-1 px-5 py-2 rounded-lg bg-[var(--accent)] text-white font-semibold text-sm hover:brightness-110 transition-all">
-              {D.next} <ChevronRight size={15} />
+              {t('wizard.next')} <ChevronRight size={15} />
             </button>
           )}
         </div>
