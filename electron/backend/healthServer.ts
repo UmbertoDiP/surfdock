@@ -162,7 +162,7 @@ async function handleGet(pathname: string, search: URLSearchParams, res: http.Se
 async function handlePost(pathname: string, search: URLSearchParams, res: http.ServerResponse) {
   const hash = (search.get('hash') || '').trim();
   const hashes = hash ? [hash] : [];
-  const vpnGuard = STATE.vpn === 'unhealthy' && getProfile().vpnEnabled && !isGateUnlocked();
+  const vpnGuard = STATE.vpn !== 'healthy' && getProfile().vpnEnabled && !isGateUnlocked();
   switch (pathname) {
     case '/api/torrent/add': {
       const magnet = (search.get('magnet') || '').trim();

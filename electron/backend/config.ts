@@ -99,7 +99,11 @@ export const IG_LOG_FILE = path.join(LOG_DIR, 'vpn_killswitch.log');
 export const VPN_DOWN_FLAG = path.join(ROOT, 'config', '.vpn-down');
 export const KILLSWITCH_STATE = path.join(ROOT, 'config', '.killswitch_state.json');
 export const GATE_UNLOCK_FILE = path.join(ROOT, 'config', 'gate_unlock.json');
-export const QBIT_CONF = path.join(ROOT, 'config', 'qbittorrent', 'qBittorrent', 'qBittorrent.conf');
+export const QBIT_CONF_PATHS = [
+  path.join(ROOT, 'config', 'qbittorrent', 'qBittorrent', 'qBittorrent.conf'),
+  path.join(ROOT, 'config', 'qbittorrent', 'qBittorrent.conf'),
+  path.join(ROOT, 'config', 'qBittorrent', 'qBittorrent.conf'),
+];
 
 export const DOCKER_SVCS = ['jellyfin', 'gluetun', 'qbittorrent', 'sonarr', 'radarr', 'prowlarr'];
 export const STOPPED_STATES = ['stoppedDL', 'stoppedUP', 'missingFiles', 'error'];

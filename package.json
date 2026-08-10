@@ -2,7 +2,7 @@
   "name": "surfdock",
   "description": "SurfDock - la baia sicura per torrent, VPN e Docker",
   "author": "Umberto Di Puorto",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "type": "module",
   "main": "dist-electron/main.js",
   "repository": {

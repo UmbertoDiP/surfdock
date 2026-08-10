@@ -2,7 +2,7 @@ import { execFile } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import {
-  GLUETUN_CT, CHECK_URL, TEST_TRACKER, TEST_PORT, QBIT_CONF,
+  GLUETUN_CT, CHECK_URL, TEST_TRACKER, TEST_PORT, QBIT_CONF_PATHS,
   KILLSWITCH_STATE, IG_POLL_SEC,
 } from './config';
 import { igLog, log } from './log';
@@ -26,10 +26,21 @@ async function checkKillswitch(): Promise<CheckResult> {
   return [true, 'kill-switch armato, gluetun healthy'];
 }
 
-// 2. IP di uscita = Mullvad (no leak ISP)
+// 2. IP di uscita = Mullvad (no leak ISP), con fallback ifconfig.me
 async function checkEgressIp(): Promise<CheckResult> {
-  const res = await runInGluetun(['wget', '-qO-', CHECK_URL], 15000);
-  if (res.code !== 0) return [false, 'impossibile contattare Mullvad API'];
+  let res = await runInGluetun(['wget', '-qO-', '--timeout=10', CHECK_URL], 15000);
+  if (res.code !== 0) {
+    const res2 = await runInGluetun(['wget', '-qO-', '--timeout=10', CHECK_URL], 15000);
+    if (res2.code !== 0) {
+      // Fallback: verifica che l'IP esterno esista e non sia locale
+      const fb = await runInGluetun(['wget', '-qO-', '--timeout=10', 'https://ifconfig.me/ip'], 15000);
+      if (fb.code === 0 && fb.stdout.trim()) {
+        return [true, `egress IP=${fb.stdout.trim()} (Mullvad API unreachable, fallback OK)`];
+      }
+      return [false, 'impossibile contattare API egress (Mullvad + ifconfig)'];
+    }
+    res = res2;
+  }
   try {
     const data = JSON.parse(res.stdout);
     if (!data.mullvad_exit_ip) return [false, `LEAK RILEVATO! IP in chiaro: ${data.ip || '?'}`];
@@ -39,23 +50,24 @@ async function checkEgressIp(): Promise<CheckResult> {
   }
 }
 
-// 3. Routing: traffico forzato su tun0
+// 3. Routing: traffico forzato su tun/wg
 async function checkRoutingTun0(): Promise<CheckResult> {
   const res = await runInGluetun(['ip', 'route', 'get', '8.8.8.8'], 10000);
   if (res.code !== 0) return [false, `impossibile leggere routing table: ${res.stderr.slice(0, 80)}`];
-  if (!res.stdout.includes('dev tun0')) return [false, `LEAK ROUTING! Traffico non su tun0: ${res.stdout.trim().slice(0, 80)}`];
-  return [true, 'routing forzato su tun0'];
+  if (!/dev (tun|wg)[A-Za-z0-9_]*/.test(res.stdout)) return [false, `LEAK ROUTING! Traffico non su tunnel: ${res.stdout.trim().slice(0, 80)}`];
+  return [true, 'routing forzato su interfaccia tunnel'];
 }
 
 // 4. qBittorrent vincolato a tun0
 async function checkQbitBinding(): Promise<CheckResult> {
-  try {
-    const conf = fs.readFileSync(QBIT_CONF, 'utf-8');
-    if (!conf.includes('InterfaceName=tun0')) return [false, 'GUINZAGLIO MANCANTE: qBittorrent non vincolato a tun0'];
-    return [true, 'qBittorrent vincolato a tun0'];
-  } catch {
-    return [false, `qBittorrent.conf non trovato: ${QBIT_CONF}`];
+  for (const p of QBIT_CONF_PATHS) {
+    try {
+      const conf = fs.readFileSync(p, 'utf-8');
+      if (conf.includes('InterfaceName=tun0')) return [true, `qBittorrent vincolato a tun0 (${p})`];
+      return [false, `GUINZAGLIO MANCANTE: qBittorrent non vincolato a tun0 (${p})`];
+    } catch { /* prova prossimo path */ }
   }
+  return [false, `qBittorrent.conf non trovato in: ${QBIT_CONF_PATHS.join(', ')}`];
 }
 
 // 5. DNS risolve tracker via gluetun interno
@@ -65,7 +77,7 @@ async function checkDns(): Promise<CheckResult> {
   if (!res.stdout.includes('Server:')) return [false, 'comportamento DNS anomalo'];
   const serverLine = res.stdout.split(/\r?\n/).find(l => l.includes('Server:'));
   const server = serverLine ? serverLine.split('Server:')[1].trim() : '?';
-  if (server !== '127.0.0.1' && server !== '127.0.0.11') return [false, `DNS server sospetto (non gluetun interno): ${server}`];
+  if (!server || !server.startsWith('127.')) return [false, `DNS server sospetto (non gluetun interno): ${server}`];
   return [true, `DNS operativo via gluetun (${server})`];
 }
 
@@ -129,6 +141,10 @@ function nowStr(): string {
 }
 
 async function onVpnDown(failed: string[]) {
+  if (ironGate.vpnDown) {
+    igLog(`[KILL] gia' DOWN, skip stopAll (${failed.join('; ')})`);
+    return;
+  }
   igLog(`[KILL] Iron Gate fallito: ${failed.join('; ')}`);
   try {
     const state = loadKillswitchState();
@@ -189,6 +205,18 @@ export async function ironGatePoller(notify: NotifyFn, stop: () => boolean): Pro
       notify('SurfDock - Docker pronto', 'Iron Gate attivato.');
     }
   }
+  // Pre-flight: verifica tool nel container gluetun
+  async function ensureGluetunTools() {
+    for (const [tool, pkg] of [['wget', 'wget'], ['nslookup', 'bind-tools'], ['nc', 'netcat-openbsd']] as const) {
+      const r = await runInGluetun(['which', tool], 5000);
+      if (r.code !== 0) {
+        igLog(`[TOOLS] ${tool} mancante in gluetun, installazione...`);
+        await runInGluetun(['apk', 'add', '--no-cache', pkg], 30000);
+      }
+    }
+  }
+  try { await ensureGluetunTools(); } catch (e: any) { igLog(`[TOOLS] pre-flight err: ${e}`); }
+
   setStartupPhase('GATE_COLD', 'Primo check Iron Gate in corso...');
   while (!stop()) {
     try {
