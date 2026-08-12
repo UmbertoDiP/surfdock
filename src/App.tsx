@@ -15,6 +15,7 @@ import { TorrentSearchModal } from './components/TorrentSearchModal';
 import { SetupWizard } from './components/SetupWizard';
 import { GateUnlock } from './components/GateUnlock';
 import { useLanguage } from './i18n/LanguageContext';
+import { track } from './utils/telemetry';
 import { useEffect, useState } from 'react';
 import { Key, Globe, Settings, Search } from 'lucide-react';
 
@@ -36,6 +37,12 @@ export default function App() {
     const id = setInterval(poll, 2000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (startup) {
+      track({ type: 'SESSION', payload: { action: 'startup_loaded', hasIssues: startup.issues?.length > 0 } });
+    }
+  }, [startup]);
 
   useEffect(() => {
     fetchProfile()
@@ -84,13 +91,13 @@ export default function App() {
             {state.vpn === 'healthy' ? t('status.iron_gate') : `VPN: ${state.vpn_detail}`}
           </span>
           <span className="flex items-center gap-2">
-            <button onClick={() => setShowSetup(true)} className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--surface-3)] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">
+            <button onClick={() => { setShowSetup(true); track({ type: 'SESSION', payload: { action: 'open_setup' } }); }} className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--surface-3)] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">
               <Settings size={11} /><span className="text-[11px]">{t('footer.configura')}</span>
             </button>
-            <button onClick={() => setShowSources(true)} className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--surface-3)] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">
+            <button onClick={() => { setShowSources(true); track({ type: 'SESSION', payload: { action: 'open_sources' } }); }} className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--surface-3)] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">
               <Globe size={11} /><span className="text-[11px]">{t('footer.fonti')}</span>
             </button>
-            <button onClick={() => setShowSearch(true)} className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--surface-3)] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">
+            <button onClick={() => { setShowSearch(true); track({ type: 'SESSION', payload: { action: 'open_search' } }); }} className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--surface-3)] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">
               <Search size={11} /><span className="text-[11px]">{t('footer.cerca')}</span>
             </button>
             <button
