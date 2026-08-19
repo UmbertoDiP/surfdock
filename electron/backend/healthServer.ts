@@ -105,8 +105,8 @@ async function handleGet(pathname: string, search: URLSearchParams, res: http.Se
   } else if (pathname === '/api/torrents') {
     try {
       sendJson(res, 200, await QB.list());
-    } catch (e: any) {
-      sendJson(res, 500, { error: String(e?.message || e).slice(0, 120) });
+    } catch {
+      sendJson(res, 200, []);
     }
   } else if (pathname === '/api/rate') {
     try {

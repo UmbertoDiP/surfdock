@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import {
   GLUETUN_CT, CHECK_URL, TEST_TRACKER, TEST_PORT, QBIT_CONF_PATHS,
-  KILLSWITCH_STATE, IG_POLL_SEC,
+  KILLSWITCH_STATE, IG_POLL_SEC, DEFAULT_DL_RATE_KB,
 } from './config';
 import { igLog, log } from './log';
 import { QB, qbitApiAlive } from './qbit';
@@ -58,8 +58,15 @@ async function checkRoutingTun0(): Promise<CheckResult> {
   return [true, 'routing forzato su interfaccia tunnel'];
 }
 
-// 4. qBittorrent vincolato a tun0
+// 4. qBittorrent vincolato a tun0 (host config) oppure via Docker network_mode
 async function checkQbitBinding(): Promise<CheckResult> {
+  // Se qbittorrent usa Docker network_mode=service:gluetun, Docker garantisce il binding
+  try {
+    const netMode = await run('docker', ['inspect', '-f', '{{.HostConfig.NetworkMode}}', 'qbittorrent'], 5000);
+    if (netMode.stdout.includes('service:gluetun')) {
+      return [true, 'qBittorrent via Docker network_mode gluetun (binding Docker garantito)'];
+    }
+  } catch { /* inspect fallito, procedi con check file */ }
   for (const p of QBIT_CONF_PATHS) {
     try {
       const conf = fs.readFileSync(p, 'utf-8');
@@ -282,6 +289,15 @@ export async function ironGatePoller(notify: NotifyFn, stop: () => boolean): Pro
             igLog('[AUTO-RESUME] torrent riavviati dopo restart qBittorrent');
           } catch (e: any) {
             igLog(`[ERR] restart qbittorrent fallito: ${e}`);
+          }
+        }
+        // Auto-rate: applica il limite di download predefinito se configurato
+        if (DEFAULT_DL_RATE_KB > 0) {
+          try {
+            await QB.setDownloadLimit(DEFAULT_DL_RATE_KB * 1024);
+            igLog(`[RATE] Download limit auto-impostato a ${DEFAULT_DL_RATE_KB} KB/s`);
+          } catch (e: any) {
+            igLog(`[ERR] auto-rate: ${e}`);
           }
         }
       }

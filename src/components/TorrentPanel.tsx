@@ -122,7 +122,7 @@ export function TorrentPanel({ state }: { state: SentinelState }) {
   async function refresh() {
     try {
       const data = await fetchTorrents();
-      setTorrents(data);
+      if (Array.isArray(data)) setTorrents(data);
       setLive(true);
     } catch {
       setLive(false);
@@ -135,7 +135,7 @@ export function TorrentPanel({ state }: { state: SentinelState }) {
       try {
         const data = await fetchTorrents();
         if (cancelled) return;
-        setTorrents(data);
+        if (Array.isArray(data)) setTorrents(data);
         setLive(true);
       } catch {
         if (!cancelled) setLive(false);

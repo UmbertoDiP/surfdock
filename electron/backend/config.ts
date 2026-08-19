@@ -25,6 +25,7 @@ interface LocalConfig {
   prowlarrUrl?: string;
   prowlarrApiKey?: string;
   corsaroNero?: { announceUrl?: string; username?: string; password?: string };
+  defaultDlRateKb?: number;
 }
 
 function loadLocalConfig(): LocalConfig {
@@ -76,6 +77,7 @@ export const POLL_SEC = 8;
 export const IG_POLL_SEC = 60;
 export const DOCKER_RETRY_MAX = 40;
 export const DOCKER_RETRY_DELAY = 3;
+export const DEFAULT_DL_RATE_KB = env('SURFDOCK_DEFAULT_DL_KB') ?? local.defaultDlRateKb ?? 0;
 
 // Percorso della GUI Docker per piattaforma (Linux usa il demone nativo, nessun launch).
 export function dockerDesktopPath(): string | null {

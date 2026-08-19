@@ -54,7 +54,9 @@ export async function fetchStartup(): Promise<StartupProgress> {
 
 export async function fetchTorrents(): Promise<TorrentDetail[]> {
   const res = await fetch(`${API}/api/torrents`);
-  return res.json();
+  if (!res.ok) return [];
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
 }
 
 export async function apiPost(path: string): Promise<{ ok: boolean }> {
